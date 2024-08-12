@@ -1,0 +1,76 @@
+{
+  "browser": "dist/bitfinex.global.js",
+  "description": "A bitfinex SDK for Node.js",
+  "homepage": "https://github.com/taichunmin/js-bitfinex",
+  "jsnext:main": "dist/bitfinex.mjs",
+  "license": "MIT",
+  "main": "dist/bitfinex.js",
+  "module": "dist/bitfinex.mjs",
+  "name": "@taichunmin/bitfinex",
+  "version": "0.0.1",
+  "author": {
+    "email": "taichunmin@gmail.com",
+    "name": "Chunmin Tai",
+    "url": "https://taichunmin.idv.tw"
+  },
+  "bugs": {
+    "url": "https://github.com/taichunmin/js-bitfinex/issues"
+  },
+  "devDependencies": {
+    "@types/lodash": "^4.17.7",
+    "@types/node": "^22.2.0",
+    "@typescript-eslint/eslint-plugin": "^7",
+    "eslint": "^8",
+    "eslint-config-love": "^43",
+    "eslint-plugin-import": "^2.29.1",
+    "eslint-plugin-n": "^17.10.2",
+    "eslint-plugin-promise": "^7.1.0",
+    "eslint-plugin-tsdoc": "^0.3.0",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.2.4",
+    "tsup": "^8.2.4",
+    "tsx": "^4.17.0",
+    "typedoc": "^0.26.5",
+    "typedoc-plugin-mdn-links": "^3.2.8",
+    "typedoc-plugin-missing-exports": "^3.0.0",
+    "typedoc-plugin-rename-defaults": "^0.7.1",
+    "typescript": "^5.5.4",
+    "typescript-eslint": "^8.1.0"
+  },
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "types": {
+        "import": "./dist/bitfinex.d.mts",
+        "require": "./dist/bitfinex.d.ts"
+      },
+      "import": "./dist/bitfinex.mjs",
+      "require": "./dist/bitfinex.js",
+      "script": "./dist/bitfinex.global.js"
+    }
+  },
+  "keywords": [
+    "bitfinex"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/taichunmin/js-bitfinex.git"
+  },
+  "dependencies": {
+    "axios": "^1.7.4",
+    "lodash": "^4.17.21",
+    "zod": "^3.23.8"
+  },
+  "scripts": {
+    "build": "yarn build:js && yarn build:docs && yarn build:sitemap",
+    "build:docs": "typedoc --out dist lib/buffer.ts",
+    "build:js": "tsup",
+    "build:sitemap": "tsx ./sitemap.ts",
+    "dev:docs": "nodemon --watch lib --ext ts --exec \"yarn build:docs\"",
+    "lint": "yarn lint:ci --fix",
+    "lint:ci": "eslint --ext ts --fix ./src",
+    "publish:test": "npm publish --access public --dry-run",
+    "test": "jest --roots ./lib --",
+    "test:ci": "jest --roots ./lib --ci --coverage"
+  }
+}

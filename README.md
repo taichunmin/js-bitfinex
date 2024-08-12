@@ -1,1 +1,1 @@
-# bitfinex.js
+# @taichunmin/bitfinex
