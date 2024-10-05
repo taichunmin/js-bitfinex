@@ -2,6 +2,7 @@ import axios, { type AxiosResponse } from 'axios'
 import { createHmac } from 'crypto'
 import _ from 'lodash'
 import * as zod from './zod'
+import * as enums from './enums'
 
 export class Bitfinex {
   readonly #affCode: string
@@ -102,6 +103,23 @@ export class Bitfinex {
     }))
   }
 
+  static async v2Config (): Promise<Record<enums.V2ConfigRequest, zod.JsonValue[]>>
+  static async v2Config (req: enums.V2ConfigRequest): Promise<zod.JsonValue[]>
+  static async v2Config <TReq extends enums.V2ConfigRequest> (reqs: TReq[]): Promise<Record<TReq, zod.JsonValue[]>>
+
+  /**
+   * 取得指定的 Bifinex 設定檔。
+   * @param reqOrReqs - 設定檔的名稱，如果帶入陣列可以一次取得多個設定檔。
+   * @returns Bifinex 設定檔的內容。
+   */
+  static async v2Config (reqOrReqs?: any): Promise<any> {
+    const reqs = zod.ZodInputV2Config.parse(_.isString(reqOrReqs) ? [reqOrReqs] : reqOrReqs) ?? enums.V2ConfigRequestConst
+    const rets = await Bitfinex.#apiGetPub<zod.JsonValue[][]>({
+      path: `v2/conf/${reqs.join(',')}`,
+    })
+    return _.isString(reqOrReqs) ? _.first(rets) : _.zipObject(reqs, rets)
+  }
+
   /**
    * 取得指定交易對的成交記錄。
    * @param opts - 參數說明
@@ -146,6 +164,12 @@ export class Bitfinex {
     return zod.ZodOutputV2TradesFundingHist.parse(await Bitfinex.#apiGetPub({
       path: `v2/trades/f${opts1.currency}/hist`,
       query: _.pick(opts1, ['limit', 'sort', 'start', 'end']),
+    }))
+  }
+
+  static async v1SymbolsDetails (): Promise<zod.OutputV1SymbolsDetails> {
+    return zod.ZodOutputV1SymbolsDetails.parse(await Bitfinex.#apiGetPub({
+      path: 'https://api.bitfinex.com/v1/symbols_details',
     }))
   }
 

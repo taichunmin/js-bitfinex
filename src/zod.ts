@@ -18,6 +18,8 @@ export type JsonObject = z.output<typeof ZodJsonObject>
 export const ZodJsonArray = z.array(ZodJsonValue)
 export type JsonArray = z.output<typeof ZodJsonArray>
 
+export const ZodAnyToUndefined = z.any().transform(() => undefined)
+
 // enums
 export const ZodBitfinexSort = z.nativeEnum(enums.BitfinexSort)
 
@@ -111,3 +113,19 @@ export const ZodOutputV2AuthReadWallets = z.array(z.tuple([
     } as unknown as Record<string, JsonValue> & { desc?: string }),
   }),
 })))
+
+// v2Config
+export const ZodInputV2Config = z.array(z.string().trim().regex(/^[\w:]+$/)).min(1).or(ZodAnyToUndefined)
+
+// v1SymbolsDetails
+export const ZodOutputV1SymbolsDetails = z.array(z.object({
+  pair: z.string().trim(),
+  price_precision: z.coerce.number().int(),
+  initial_margin: z.coerce.number(),
+  minimum_margin: z.coerce.number(),
+  maximum_order_size: z.coerce.number(),
+  minimum_order_size: z.coerce.number(),
+  expiration: z.string(),
+  margin: z.coerce.boolean(),
+}))
+export type OutputV1SymbolsDetails = z.output<typeof ZodOutputV1SymbolsDetails>
