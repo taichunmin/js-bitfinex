@@ -54,7 +54,7 @@ export type OutputV2TradesTradingHist = z.output<typeof ZodOutputV2TradesTrading
 
 // v2TradesFundingHist
 export const ZodInputV2TradesFundingHist = z.object({
-  currency: z.string().toUpperCase().default('USD'),
+  currency: z.string().trim().toUpperCase().default('USD'),
   limit: z.number().max(10000).default(125),
   sort: ZodBitfinexSort.default(enums.BitfinexSort.DESC),
   start: z.date().transform(transformMts).optional(),
@@ -129,3 +129,53 @@ export const ZodOutputV1SymbolsDetails = z.array(z.object({
   margin: z.coerce.boolean(),
 }))
 export type OutputV1SymbolsDetails = z.output<typeof ZodOutputV1SymbolsDetails>
+
+// v2AuthReadFundingCredits
+export const ZodInputV2AuthReadFundingCredits = z.object({
+  currency: z.string().trim().toUpperCase().optional(),
+})
+export type InputV2AuthReadFundingCredits = z.input<typeof ZodInputV2AuthReadFundingCredits>
+export const ZodOutputV2AuthReadFundingCredits = z.array(z.tuple([
+  z.number().int(), // Loan ID
+  z.string(), // Symbol: The currency of the loan (fUSD, etc)
+  z.number().int(), // Side: 1 if you are the lender, 0 if you are both the lender and borrower, -1 if you're the borrower
+  z.number().int(), // MTS_CREATE: Millisecond Time Stamp when the loan was created
+  z.number().int(), // MTS_UPDATE: Millisecond Time Stamp when the loan was updated
+  z.number(), // AMOUNT: Amount of funds provided
+  ZodJsonValue, // FLAGS: Future params object (stay tuned)
+  z.string(), // STATUS: Loan Status: ACTIVE
+  z.string(), // RATE_TYPE: "FIXED" or "VAR" (for FRR)
+  z.unknown(),
+  z.unknown(),
+  z.number(), // RATE: Rate of the loan (percentage expressed as decimal number i.e. 1% = 0.01)
+  z.number().int(), // PERIOD: Period of the loan
+  z.number().int(), // MTS_OPENING: Millisecond Time Stamp for when the loan was opened
+  z.number().int(), // MTS_LAST_PAYOUT: Millisecond Time Stamp for when the last payout was made
+  z.coerce.boolean().nullable(), // NOTIFY: 0 if false, 1 if true
+  z.coerce.boolean(), // HIDDEN: 0 if false, 1 if true
+  z.unknown(),
+  z.coerce.boolean(), // RENEW: 0 if false, 1 if true
+  z.unknown(),
+  z.coerce.boolean(), // NO_CLOSE: If funding will be returned when position is closed. 0 if false, 1 if true
+  z.string(), // POSITION_PAIR: Pair of the position that the funding was used for
+]).transform(([id, symbol, side, createdAt, updatedAt, amount, flags, status, rateType,,, rate, period, openedAt, lastPayoutedAt, notify, hidden,, renew,, noClose, positionPair]) => ({
+  id,
+  symbol,
+  side,
+  amount,
+  flags,
+  status,
+  rateType,
+  rate,
+  period,
+  notify,
+  hidden,
+  renew,
+  noClose,
+  positionPair,
+  openedAt: new Date(openedAt),
+  lastPayoutedAt: new Date(lastPayoutedAt),
+  createdAt: new Date(createdAt),
+  updatedAt: new Date(updatedAt),
+})))
+export type OutputV2AuthReadFundingCredits = z.output<typeof ZodOutputV2AuthReadFundingCredits>

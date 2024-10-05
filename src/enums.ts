@@ -36,6 +36,7 @@ export const V2ConfigRequestConst = [
   'pub:map:currency:label',
   'pub:map:currency:pool',
   'pub:map:currency:support:securities',
+  'pub:map:currency:support:zendesk',
   'pub:map:currency:sym',
   'pub:map:currency:tx:fee',
   'pub:map:currency:unit',
@@ -43,6 +44,8 @@ export const V2ConfigRequestConst = [
   'pub:map:pair:sym',
   'pub:map:tx:method:pool',
   'pub:map:tx:method',
+  'pub:spec:futures',
+  'pub:spec:margin',
   'pub:spec:site:maintenance',
   'pub:spec:ui_denom',
 ] as const

@@ -98,9 +98,15 @@ export class Bitfinex {
    * @see [Platform Status | BitFinex API](https://docs.bitfinex.com/reference/rest-public-platform-status)
    */
   static async v2PlatformStatus (): Promise<zod.OutputV2PlatformStatus> {
-    return zod.ZodOutputV2PlatformStatus.parse(await Bitfinex.#apiGetPub({
-      path: 'v2/platform/status',
-    }))
+    const trace: Record<string, any> = {}
+    try {
+      trace.resp = await Bitfinex.#apiGetPub({
+        path: 'v2/platform/status',
+      })
+      return zod.ZodOutputV2PlatformStatus.parse(trace.resp)
+    } catch (err) {
+      throw _.update(err, 'data.v2PlatformStatus', old => old ?? trace)
+    }
   }
 
   static async v2Config (): Promise<Record<enums.V2ConfigRequest, zod.JsonValue[]>>
@@ -113,11 +119,16 @@ export class Bitfinex {
    * @returns Bifinex 設定檔的內容。
    */
   static async v2Config (reqOrReqs?: any): Promise<any> {
-    const reqs = zod.ZodInputV2Config.parse(_.isString(reqOrReqs) ? [reqOrReqs] : reqOrReqs) ?? enums.V2ConfigRequestConst
-    const rets = await Bitfinex.#apiGetPub<zod.JsonValue[][]>({
-      path: `v2/conf/${reqs.join(',')}`,
-    })
-    return _.isString(reqOrReqs) ? _.first(rets) : _.zipObject(reqs, rets)
+    const trace: Record<string, any> = {}
+    try {
+      trace.reqs = zod.ZodInputV2Config.parse(_.isString(reqOrReqs) ? [reqOrReqs] : reqOrReqs) ?? enums.V2ConfigRequestConst
+      trace.resp = await Bitfinex.#apiGetPub<zod.JsonValue[][]>({
+        path: `v2/conf/${trace.reqs.join(',')}`,
+      })
+      return _.isString(reqOrReqs) ? _.first(trace.resp) : _.zipObject(trace.reqs, trace.resp)
+    } catch (err) {
+      throw _.update(err, 'data.v2Config', old => old ?? trace)
+    }
   }
 
   /**
@@ -136,11 +147,17 @@ export class Bitfinex {
    * @see [Trades | BitFinex API](https://docs.bitfinex.com/reference/rest-public-trades)
    */
   static async v2TradesTradingHist (opts: zod.InputV2TradesTradingHist = {}): Promise<zod.OutputV2TradesTradingHist> {
-    const opts1 = zod.ZodInputV2TradesTradingHist.parse(opts)
-    return zod.ZodOutputV2TradesTradingHist.parse(await Bitfinex.#apiGetPub({
-      path: `v2/trades/t${opts1.pair}/hist`,
-      query: _.pick(opts1, ['limit', 'sort', 'start', 'end']),
-    }))
+    const trace: Record<string, any> = {}
+    try {
+      trace.opts = zod.ZodInputV2TradesTradingHist.parse(opts)
+      trace.resp = await Bitfinex.#apiGetPub({
+        path: `v2/trades/t${trace.opts.pair}/hist`,
+        query: _.pick(trace.opts, ['limit', 'sort', 'start', 'end']),
+      })
+      return zod.ZodOutputV2TradesTradingHist.parse(trace.resp)
+    } catch (err) {
+      throw _.update(err, 'data.v2TradesTradingHist', old => old ?? trace)
+    }
   }
 
   /**
@@ -160,17 +177,41 @@ export class Bitfinex {
    * @see [Trades | BitFinex API](https://docs.bitfinex.com/reference/rest-public-trades)
    */
   static async v2TradesFundingHist (opts: zod.InputV2TradesFundingHist = {}): Promise<zod.OutputV2TradesFundingHist> {
-    const opts1 = zod.ZodInputV2TradesFundingHist.parse(opts)
-    return zod.ZodOutputV2TradesFundingHist.parse(await Bitfinex.#apiGetPub({
-      path: `v2/trades/f${opts1.currency}/hist`,
-      query: _.pick(opts1, ['limit', 'sort', 'start', 'end']),
-    }))
+    const trace: Record<string, any> = {}
+    try {
+      trace.opts = zod.ZodInputV2TradesFundingHist.parse(opts)
+      trace.resp = await Bitfinex.#apiGetPub({
+        path: `v2/trades/f${trace.opts.currency}/hist`,
+        query: _.pick(trace.opts, ['limit', 'sort', 'start', 'end']),
+      })
+      return zod.ZodOutputV2TradesFundingHist.parse(trace.resp)
+    } catch (err) {
+      throw _.update(err, 'data.v2TradesFundingHist', old => old ?? trace)
+    }
   }
 
+  /**
+   * 取得 Bitfinex 所有交易對的詳細資訊。
+   * @returns
+   * - pair: 交易對
+   * - price_precision: 價格小數點精確度
+   * - initial_margin: 初始保證金百分比
+   * - minimum_margin: 最低保證金百分比
+   * - maximum_order_size: 最大訂單量
+   * - minimum_order_size: 最小訂單量
+   * - expiration: 過期時間
+   * - margin: 保證金交易是否可用
+   */
   static async v1SymbolsDetails (): Promise<zod.OutputV1SymbolsDetails> {
-    return zod.ZodOutputV1SymbolsDetails.parse(await Bitfinex.#apiGetPub({
-      path: 'https://api.bitfinex.com/v1/symbols_details',
-    }))
+    const trace: Record<string, any> = {}
+    try {
+      trace.resp = await Bitfinex.#apiGetPub({
+        path: 'https://api.bitfinex.com/v1/symbols_details',
+      })
+      return zod.ZodOutputV1SymbolsDetails.parse(trace.resp)
+    } catch (err) {
+      throw _.update(err, 'data.v1SymbolsDetails', old => old ?? trace)
+    }
   }
 
   /**
@@ -200,9 +241,15 @@ export class Bitfinex {
    * @see [Key Permissions | BitFinex API](https://docs.bitfinex.com/reference/key-permissions)
    */
   async v2AuthReadPermissions (): Promise<zod.OutputV2AuthReadPermissions> {
-    return zod.ZodOutputV2AuthReadPermissions.parse(await this.#apiPostAuth({
-      path: 'v2/auth/r/permissions',
-    }))
+    const trace: Record<string, any> = {}
+    try {
+      trace.resp = await this.#apiPostAuth({
+        path: 'v2/auth/r/permissions',
+      })
+      return zod.ZodOutputV2AuthReadPermissions.parse(trace.resp)
+    } catch (err) {
+      throw _.update(err, 'data.v2AuthReadPermissions', old => old ?? trace)
+    }
   }
 
   /**
@@ -218,8 +265,52 @@ export class Bitfinex {
    * @see [Wallets | BitFinex API](https://docs.bitfinex.com/reference/rest-auth-wallets)
    */
   async v2AuthReadWallets (): Promise<zod.OutputV2AuthReadWallets> {
-    return zod.ZodOutputV2AuthReadWallets.parse(await this.#apiPostAuth({
-      path: 'v2/auth/r/wallets',
-    }))
+    const trace: Record<string, any> = {}
+    try {
+      trace.resp = await this.#apiPostAuth({
+        path: 'v2/auth/r/wallets',
+      })
+      return zod.ZodOutputV2AuthReadWallets.parse(trace.resp)
+    } catch (err) {
+      throw _.update(err, 'data.v2AuthReadWallets', old => old ?? trace)
+    }
+  }
+
+  /**
+   * 取得目前出借中或是借入中的融資記錄。
+   * @param opts - 參數說明
+   * - currency: 貨幣，如果未指定則回傳所有貨幣的融資記錄。
+   * @returns
+   * - id: 融資記錄 ID
+   * - symbol: 貨幣符號
+   * - side: 融資方向，`1` 代表為貸方，`0` 代表同時為貸方與借款人，`-1` 代表為借款人
+   * - amount: 融資金額
+   * - flags: 融資參數 (目前未定義)
+   * - status: 融資狀態 `ACTIVE`
+   * - rateType: 融資利率類型，`FIXED` 代表固定利率，`VAR` 代表基於 FRR 浮動利率
+   * - rate: 融資利率
+   * - period: 融資天數
+   * - notify: 是否通知
+   * - hidden: 是否隱藏
+   * - renew: 是否自動續借
+   * - noClose: 在保證金交易被關閉時是否自動結束融資
+   * - positionPair: 保證金交易的交易對
+   * - openedAt: 融資開始時間
+   * - lastPayoutedAt: 最後一次支付時間
+   * - createdAt: 建立時間
+   * - updatedAt: 最後更新時間
+   */
+  async v2AuthReadFundingCredits (opts: zod.InputV2AuthReadFundingCredits = {}): Promise<zod.OutputV2AuthReadFundingCredits> {
+    const trace: Record<string, any> = {}
+    try {
+      trace.opts = zod.ZodInputV2AuthReadFundingCredits.parse(opts)
+      trace.symbol = _.isNil(trace.opts.currency) ? '' : `/f${trace.opts.currency}`
+      trace.resp = await this.#apiPostAuth({
+        path: `v2/auth/r/funding/credits${trace.symbol}`,
+      })
+      return zod.ZodOutputV2AuthReadFundingCredits.parse(trace.resp)
+    } catch (err) {
+      throw _.update(err, 'data.v2AuthReadFundingCredits', old => old ?? trace)
+    }
   }
 }
