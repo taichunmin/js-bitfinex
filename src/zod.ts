@@ -37,7 +37,7 @@ export type OutputV2PlatformStatus = z.output<typeof ZodOutputV2PlatformStatus>
 // v2TradesTradingHist
 export const ZodInputV2TradesTradingHist = z.object({
   pair: z.string().toUpperCase().default('BTCUSD'),
-  limit: z.number().max(10000).default(125),
+  limit: z.number().int().max(10000).default(125),
   sort: ZodBitfinexSort.default(enums.BitfinexSort.DESC),
   start: z.date().transform(transformMts).optional(),
   end: z.date().transform(transformMts).optional(),
@@ -55,7 +55,7 @@ export type OutputV2TradesTradingHist = z.output<typeof ZodOutputV2TradesTrading
 // v2TradesFundingHist
 export const ZodInputV2TradesFundingHist = z.object({
   currency: z.string().trim().toUpperCase().default('USD'),
-  limit: z.number().max(10000).default(125),
+  limit: z.number().int().max(10000).default(125),
   sort: ZodBitfinexSort.default(enums.BitfinexSort.DESC),
   start: z.date().transform(transformMts).optional(),
   end: z.date().transform(transformMts).optional(),
@@ -158,7 +158,7 @@ export const ZodOutputV2AuthReadFundingCredits = z.array(z.tuple([
   z.unknown(),
   z.coerce.boolean(), // NO_CLOSE: If funding will be returned when position is closed. 0 if false, 1 if true
   z.string(), // POSITION_PAIR: Pair of the position that the funding was used for
-]).transform(([id, symbol, side, createdAt, updatedAt, amount, flags, status, rateType,,, rate, period, openedAt, lastPayoutedAt, notify, hidden,, renew,, noClose, positionPair]) => ({
+]).transform(([id, symbol, side, mtsCreate, mtsUpdate, amount, flags, status, rateType,,, rate, period, mtsOpening, mtsLastPayout, notify, hidden,, renew,, noClose, positionPair]) => ({
   id,
   symbol,
   side,
@@ -173,9 +173,172 @@ export const ZodOutputV2AuthReadFundingCredits = z.array(z.tuple([
   renew,
   noClose,
   positionPair,
-  openedAt: new Date(openedAt),
-  lastPayoutedAt: new Date(lastPayoutedAt),
-  createdAt: new Date(createdAt),
-  updatedAt: new Date(updatedAt),
+  mtsOpening: new Date(mtsOpening),
+  mtsLastPayout: new Date(mtsLastPayout),
+  mtsCreate: new Date(mtsCreate),
+  mtsUpdate: new Date(mtsUpdate),
 })))
 export type OutputV2AuthReadFundingCredits = z.output<typeof ZodOutputV2AuthReadFundingCredits>
+
+// v2AuthReadFundingAutoStatus
+export const ZodInputV2AuthReadFundingAutoStatus = z.object({
+  currency: z.string().trim().toUpperCase().default('USD'),
+})
+export type InputV2AuthReadFundingAutoStatus = z.input<typeof ZodInputV2AuthReadFundingAutoStatus>
+export const ZodOutputV2AuthReadFundingAutoStatus = z.tuple([
+  z.string(), // Currency
+  z.number().int(), // PERIOD: Period of the loan
+  z.number(), // RATE: Rate of the loan (percentage expressed as decimal number i.e. 1% = 0.01)
+  z.number(), // AMOUNT: Amount of funds provided
+]).transform(([currency, period, rate, amount]) => ({ currency, period, rate, amount }))
+export type OutputV2AuthReadFundingAutoStatus = z.output<typeof ZodOutputV2AuthReadFundingAutoStatus>
+
+// v2AuthReadFundingTradesHist
+export const ZodInputV2AuthReadFundingTradesHist = z.object({
+  currency: z.string().trim().toUpperCase().optional(),
+  end: z.date().transform(transformMts).optional(),
+  limit: z.number().int().optional(),
+  start: z.date().transform(transformMts).optional(),
+})
+export type InputV2AuthReadFundingTradesHist = z.input<typeof ZodInputV2AuthReadFundingTradesHist>
+export const ZodOutputV2AuthReadFundingTradesHist = z.array(z.tuple([
+  z.number().int(), // Loan ID
+  z.string(), // Symbol: The currency of the loan (fUSD, etc)
+  z.number().int(), // MTS_CREATE: Millisecond Time Stamp when the loan was created
+  z.number().int(), // OFFER_ID: Funding offer ID
+  z.number(), // AMOUNT: Amount of funds provided
+  z.number(), // RATE: Rate of the loan (percentage expressed as decimal number i.e. 1% = 0.01)
+  z.number().int(), // PERIOD: Period of the loan
+  z.unknown(),
+]).transform(([id, symbol, mtsCreate, offerId, amount, rate, period]) => ({
+  id,
+  symbol,
+  offerId,
+  amount,
+  rate,
+  period,
+  mtsCreate: new Date(mtsCreate),
+})))
+export type OutputV2AuthReadFundingTradesHist = z.output<typeof ZodOutputV2AuthReadFundingTradesHist>
+
+// v2AuthReadFundingCreditsHist
+export const ZodInputV2AuthReadFundingCreditsHist = z.object({
+  currency: z.string().trim().toUpperCase().optional(),
+  end: z.date().transform(transformMts).optional(),
+  limit: z.number().int().max(500).default(25),
+  start: z.date().transform(transformMts).optional(),
+})
+export type InputV2AuthReadFundingCreditsHist = z.input<typeof ZodInputV2AuthReadFundingCreditsHist>
+export const ZodOutputV2AuthReadFundingCreditsHist = z.array(z.tuple([
+  z.number().int(), // Loan ID
+  z.string(), // Symbol: The currency of the loan (fUSD, etc)
+  z.number().int(), // Side: 1 if you are the lender, 0 if you are both the lender and borrower, -1 if you're the borrower
+  z.number().int(), // MTS_CREATE: Millisecond Time Stamp when the loan was created
+  z.number().int(), // MTS_UPDATE: Millisecond Time Stamp when the loan was updated
+  z.number(), // AMOUNT: Amount of funds provided
+  ZodJsonValue, // FLAGS: Future params object (stay tuned)
+  z.string(), // STATUS: Loan Status: ACTIVE
+  z.string(), // RATE_TYPE: "FIXED" or "VAR" (for FRR)
+  z.unknown(),
+  z.unknown(),
+  z.number(), // RATE: Rate of the loan (percentage expressed as decimal number i.e. 1% = 0.01)
+  z.number().int(), // PERIOD: Period of the loan
+  z.number().int(), // MTS_OPENING: Millisecond Time Stamp for when the loan was opened
+  z.number().int(), // MTS_LAST_PAYOUT: Millisecond Time Stamp for when the last payout was made
+  z.coerce.boolean().nullable(), // NOTIFY: 0 if false, 1 if true
+  z.coerce.boolean(), // HIDDEN: 0 if false, 1 if true
+  z.unknown(),
+  z.coerce.boolean(), // RENEW: 0 if false, 1 if true
+  z.unknown(),
+  z.coerce.boolean(), // NO_CLOSE: If funding will be returned when position is closed. 0 if false, 1 if true
+  z.string(), // POSITION_PAIR: Pair of the position that the funding was used for
+]).transform(([id, symbol, side, mtsCreate, mtsUpdate, amount, flags, status, rateType,,, rate, period, mtsOpening, mtsLastPayout, notify, hidden,, renew,, noClose, positionPair]) => ({
+  id,
+  symbol,
+  side,
+  amount,
+  flags,
+  status,
+  rateType,
+  rate,
+  period,
+  notify,
+  hidden,
+  renew,
+  noClose,
+  positionPair,
+  mtsOpening: new Date(mtsOpening),
+  mtsLastPayout: new Date(mtsLastPayout),
+  mtsCreate: new Date(mtsCreate),
+  mtsUpdate: new Date(mtsUpdate),
+})))
+export type OutputV2AuthReadFundingCreditsHist = z.output<typeof ZodOutputV2AuthReadFundingCreditsHist>
+
+// v2CandlesFundingHist
+const ZodInputV2CandlesBase = z.object({
+  section: z.enum(['last', 'hist']).default('hist'),
+  timeframe: z.enum(['1m', '5m', '15m', '30m', '1h', '3h', '6h', '12h', '1D', '1W', '14D', '1M']).default('1h'),
+  limit: z.number().int().max(10000).optional(),
+  sort: ZodBitfinexSort.default(enums.BitfinexSort.DESC),
+  start: z.date().transform(transformMts).optional(),
+  end: z.date().transform(transformMts).optional(),
+})
+export const ZodInputV2Candles = z.union([
+  ZodInputV2CandlesBase.extend({
+    currency: z.undefined(),
+    period: z.undefined(),
+    pair: z.string().trim().toUpperCase().default('BTCUSD'),
+  }),
+  ZodInputV2CandlesBase.extend({
+    pair: z.undefined(),
+    currency: z.string().trim().toUpperCase().default('USD'),
+    period: z.number().int().default(2).transform(p => `p${p}`),
+  }),
+  ZodInputV2CandlesBase.extend({
+    pair: z.undefined(),
+    currency: z.string().trim().toUpperCase().default('USD'),
+    aggregation: z.union([z.literal(10), z.literal(30)]).default(30),
+    periodEnd: z.number().int(),
+    periodStart: z.number().int(),
+  }).transform(({ aggregation, periodStart, periodEnd, ...others }) => ({ ...others, period: `a${aggregation}:p${periodStart}:p${periodEnd}` })),
+])
+export type InputV2Candles = z.input<typeof ZodInputV2Candles>
+export const ZodOutputV2Candles = z.array(z.tuple([
+  z.number().int(), // Millisecond epoch timestamp
+  z.number(), // Open: First execution during the time frame
+  z.number(), // Close: Last execution during the time frame
+  z.number(), // HIGH: Highest execution during the time frame
+  z.number(), // LOW: Lowest execution during the timeframe
+  z.number(), // VOLUME: Quantity of symbol traded within the timeframe
+]).transform(([mts, open, close, high, low, volume]) => ({ mts: new Date(mts), open, close, high, low, volume })))
+export type OutputV2Candles = z.output<typeof ZodOutputV2Candles>
+
+// v2AuthReadLedgersHist
+export const ZodInputV2AuthReadLedgersHist = z.object({
+  currency: z.string().trim().toUpperCase().optional(),
+  category: z.nativeEnum(enums.LedgersHistCategory).optional(),
+  limit: z.number().int().max(2500).optional(),
+  start: z.date().transform(transformMts).optional(),
+  end: z.date().transform(transformMts).optional(),
+})
+export type InputV2AuthReadLedgersHist = z.input<typeof ZodInputV2AuthReadLedgersHist>
+export const ZodOutputV2AuthReadLedgersHist = z.array(z.tuple([
+  z.number().int(), // ID: Ledger identifier
+  z.string().trim(), // CURRENCY: The symbol of the currency (e.g. "BTC")
+  z.string().trim().nullable(), // WALLET: Returns the relevant wallet for the ledger entry ('exchange', 'margin', 'funding', 'contribution')
+  z.number().int(), // MTS: Timestamp in milliseconds
+  z.unknown(),
+  z.number(), // AMOUNT: Amount changed
+  z.number(), // BALANCE: Balance after change
+  z.unknown(),
+  z.string().trim(), // DESCRIPTION: Description of ledger transaction
+]).transform(([id, currency, wallet, mts,, amount, balance,, description]) => ({
+  id,
+  currency,
+  wallet,
+  mts: new Date(mts),
+  amount,
+  balance,
+  description,
+})))
+export type OutputV2AuthReadLedgersHist = z.output<typeof ZodOutputV2AuthReadLedgersHist>
