@@ -1,8 +1,10 @@
 import axios, { type AxiosResponse } from 'axios'
 import { createHmac } from 'crypto'
 import _ from 'lodash'
-import * as zod from './zod'
 import * as enums from './enums'
+import * as zod from './zod'
+
+const V2ConfigRequestConst = _.values(enums.V2ConfigRequest)
 
 export class Bitfinex {
   readonly #affCode: string
@@ -93,6 +95,7 @@ export class Bitfinex {
    * 取得目前 Bitfinex 平台的運作狀態。維護狀態通常會持續幾分鐘到幾小時，並且在基礎設施升級期間也有可能進入維護狀態。
    *
    * 當平台標記為維護模式時，機器人應停止所有交易活動。在維護模式時可能會無法取消訂單和下單。
+   * @group v2
    * @returns
    * - status: operative = 1, maintenance = 0
    * @see [Platform Status | BitFinex API](https://docs.bitfinex.com/reference/rest-public-platform-status)
@@ -115,6 +118,7 @@ export class Bitfinex {
 
   /**
    * 取得指定的 Bifinex 設定檔。
+   * @group v2
    * @param reqOrReqs - 設定檔的名稱，如果帶入陣列可以一次取得多個設定檔。
    * @returns Bifinex 設定檔的內容。
    * @see [Configs | BitFinex API](https://docs.bitfinex.com/reference/rest-public-conf)
@@ -122,7 +126,7 @@ export class Bitfinex {
   static async v2Config (reqOrReqs?: any): Promise<any> {
     const trace: Record<string, any> = { reqs: reqOrReqs }
     try {
-      const reqs = trace.reqs = zod.ZodInputV2Config.parse(_.isString(reqOrReqs) ? [reqOrReqs] : reqOrReqs) ?? enums.V2ConfigRequestConst
+      const reqs = trace.reqs = zod.ZodInputV2Config.parse(_.isString(reqOrReqs) ? [reqOrReqs] : reqOrReqs) ?? V2ConfigRequestConst
       trace.resp = await Bitfinex.#apiGetPub<zod.JsonValue[][]>({
         path: `v2/conf/${reqs.join(',')}`,
       })
@@ -134,6 +138,7 @@ export class Bitfinex {
 
   /**
    * 取得指定交易對的成交記錄。
+   * @group v2/trades
    * @param opts - 參數說明
    * - pair: 交易對，預設為 `BTCUSD`
    * - limit: 回傳的交易記錄數量上限，最大 `10000`，預設為 `125`
@@ -163,6 +168,7 @@ export class Bitfinex {
 
   /**
    * 取得指定貨幣的融資成交記錄。
+   * @group v2/trades
    * @param opts - 參數說明
    * - currency: 貨幣，預設為 `USD`
    * - limit: 回傳的交易記錄數量上限，最大 `10000`，預設為 `125`
@@ -193,6 +199,7 @@ export class Bitfinex {
 
   /**
    * 取得 Bitfinex 所有交易對的詳細資訊。
+   * @group v1
    * @returns
    * - pair: 交易對
    * - price_precision: 價格小數點精確度
@@ -217,6 +224,7 @@ export class Bitfinex {
 
   /**
    * 取得融資的 K 線圖。
+   * @group v2/candles
    * @param opts - 參數說明
    * - timeframe: 時間框架，預設為 `1h`
    * - pair: 交易對，預設為 `BTCUSD`
@@ -257,7 +265,92 @@ export class Bitfinex {
   }
 
   /**
+   * 取得指定貨幣最近的融資統計記錄
+   * @group v2/funding
+   * @param opts - 參數說明
+   * - currency: 貨幣，預設為 `USD`
+   * - limit: 回傳的融資統計記錄數量上限，最大 `250`
+   * - start: 回傳的融資統計記錄中，`mts` 欄位不小於此值
+   * - end: 回傳的融資統計記錄中，`mts` 欄位不大於此值
+   * @returns
+   * - mts: 融資統計記錄的產生時間
+   * - frr: [Flash Return Rate](https://support.bitfinex.com/hc/en-us/articles/213919009-What-is-the-Bitfinex-Funding-Flash-Return-Rate)
+   * - dpr: Daily Percentage Rate，由公式 `frr * 100 * 365` 計算產生
+   * - apr: Annual Percentage Rate，由公式 `frr * 100 * 365 * 365` 計算產生
+   * - avgPeriod: 平均融資天數
+   * - amount: 融資貨幣總數量
+   * - amountUsed: 已使用的融資貨幣數量
+   * - belowThreshold: 低於 `0.75%` 的融資貨幣掛單數量
+   * @see [Funding Funding Statistics | BitFinex API](https://docs.bitfinex.com/reference/rest-public-funding-stats)
+   */
+  static async v2FundingStatsHist (opts: zod.InputV2FundingStatsHist = {}): Promise<zod.OutputV2FundingStatsHist> {
+    const trace: Record<string, any> = { opts }
+    try {
+      const opts1 = trace.opts = zod.ZodInputV2FundingStatsHist.parse(opts)
+      trace.resp = await Bitfinex.#apiGetPub({
+        path: `v2/funding/stats/f${opts1.currency}/hist`,
+        query: _.pick(opts1, ['limit', 'start', 'end']),
+      })
+      return zod.ZodOutputV2FundingStatsHist.parse(trace.resp)
+    } catch (err) {
+      throw _.update(err, 'data.v2FundingStatsHist', old => old ?? trace)
+    }
+  }
+
+  /**
+   * 取得交易對以及融資目前的行情概覽。它會回傳當前最佳買入價和賣出價、最近成交價，以及昨日至今的每日成交量和價格變動資訊。並允許同時取得多個交易對及融資的行情資訊。
+   * @group v2/tickers
+   * @param opts - 參數說明
+   * - symbols: 交易對或融資代碼的陣列，或指定 ALL 取得全部的行情概覽，預設為 `ALL`。
+   * @returns
+   * - 交易對的行情概覽欄位
+   *     - symbol: 交易對代碼
+   *     - bidPrice: 最高的買入價
+   *     - bidSize: 最高的 25 個買入價總數量
+   *     - askPrice: 最低的賣出價
+   *     - askSize: 最低的 25 個賣出價總數量
+   *     - dailyChange: 昨日至今的價格變化量
+   *     - dailyChangeRelative: 昨日至今的相對價格變化（乘以 100 即為百分比變化）
+   *     - lastPrice: 最新成交價
+   *     - volume: 昨日至今的成交量
+   *     - high: 昨日至今的最高價
+   *     - low: 昨日至今的最低價
+   * - 融資的行情概覽欄位
+   *     - symbol: 融資代碼
+   *     - frr: [Flash Return Rate](https://support.bitfinex.com/hc/en-us/articles/213919009-What-is-the-Bitfinex-Funding-Flash-Return-Rate)
+   *     - dpr: Daily Percentage Rate，由公式 `frr * 100` 計算產生
+   *     - apr: Annual Percentage Rate，由公式 `frr * 100 * 365` 計算產生
+   *     - bidPrice: 最高的貸款利率
+   *     - bidPeriod: 最高貸款利率的天數
+   *     - bidSize: 最高的 25 個貸款利率的總數量
+   *     - askPrice: 最低的放款利率
+   *     - askPeriod: 最低放款利率的天數
+   *     - askSize: 最低的 25 個放款利率的總數量
+   *     - dailyChange: 昨日至今的利率變化量
+   *     - dailyChangePerc: 昨日至今的相對利率變化（乘以 100 即為百分比變化）
+   *     - lastPrice: 最新成交利率
+   *     - volume: 昨日至今的成交量
+   *     - high: 昨日至今的最高利率
+   *     - low: 昨日至今的最低利率
+   *     - frrAmountAvailable: 以 FRR 進行貸款或放款的數量
+   */
+  static async v2Tickers (opts: zod.InputV2Tickers = {}): Promise<zod.OutputV2Tickers> {
+    const trace: Record<string, any> = { opts }
+    try {
+      const opts1 = trace.opts = zod.ZodInputV2Tickers.parse(opts)
+      trace.resp = await Bitfinex.#apiGetPub({
+        path: 'v2/tickers',
+        query: { symbols: opts1.symbols },
+      })
+      return zod.ZodOutputV2Tickers.parse(trace.resp)
+    } catch (err) {
+      throw _.update(err, 'data.v2Tickers', old => old ?? trace)
+    }
+  }
+
+  /**
    * 取得目前 apiKey 或 token 的權限。
+   * @group v2/auth
    * @returns 回傳結果的範例如下：
    *
    * ```json
@@ -296,6 +389,7 @@ export class Bitfinex {
 
   /**
    * 取得錢包的資訊。
+   * @group v2/auth
    * @returns
    * - type: 錢包類型
    * - currency: 貨幣
@@ -320,6 +414,7 @@ export class Bitfinex {
 
   /**
    * 取得目前出借中或是借入中的融資記錄。
+   * @group v2/auth/funding
    * @param opts - 參數說明
    * - currency: 貨幣，如果未指定則回傳所有貨幣的融資記錄。
    * @returns
@@ -359,13 +454,16 @@ export class Bitfinex {
 
   /**
    * 取得指定融資貨幣的自動借出設定
+   * @group v2/auth/funding
    * @param opts - 參數說明
-   * - currency: 貨幣。
+   * - currency: 貨幣
    * @returns
    * - currency: 貨幣
    * - period: 融資天數
    * - rate: 融資利率
    * - amount: 融資最大數量，`0` 代表無限制
+   *
+   * 若回傳 `null` 代表沒有啟用自動借出。
    */
   async v2AuthReadFundingAutoStatus (opts: zod.InputV2AuthReadFundingAutoStatus = {}): Promise<zod.OutputV2AuthReadFundingAutoStatus> {
     const trace: Record<string, any> = { opts }
@@ -382,7 +480,43 @@ export class Bitfinex {
   }
 
   /**
+   * 更新融資貨幣的自動借出設定
+   * @group v2/auth/funding
+   * @param opts - 參數說明
+   * - status: `1` 代表啟用、`0` 代表停用
+   * - currency: 貨幣
+   * - amount: 融資自動借出的數量，最小為 50 USD 或等值的融資貨幣，`0` 代表無上限
+   * - period: 融資天數，預設為 `2`
+   * - rate: 融資利率 (單位：百分比)，省略或 `0` 代表套用 FRR 浮動利率
+   * @returns
+   * - mts: 通知的時間
+   * - type: 通知的類型，固定為 `fa-req`
+   * - msgId: 訊息 ID
+   * - offer.currency: 貨幣
+   * - offer.period: 融資天數
+   * - offer.rate: 融資利率
+   * - offer.threshold: 融資自動借出的數量，`0` 代表無上限
+   * - code: W.I.P. (work in progress)
+   * - status: 通知的狀態，這個欄位可能會因時而異，可能的值為 `SUCCESS`、`ERROR`、`FAILURE`…
+   * - text: 通知的詳細內容
+   */
+  async v2AuthWriteFundingAuto (opts: zod.InputV2AuthWriteFundingAuto): Promise<zod.OutputV2AuthWriteFundingAuto> {
+    const trace: Record<string, any> = { opts }
+    try {
+      const opts1 = trace.opts = zod.ZodInputV2AuthWriteFundingAuto.parse(opts)
+      trace.resp = await this.#apiPostAuth({
+        path: 'v2/auth/w/funding/auto',
+        body: opts1,
+      })
+      return zod.ZodOutputV2AuthWriteFundingAuto.parse(trace.resp)
+    } catch (err) {
+      throw _.update(err, 'data.v2AuthWriteFundingAuto', old => old ?? trace)
+    }
+  }
+
+  /**
    * 取得已掛單融資的交易記錄。可以用來查詢特定貨幣的融資交易記錄，或是一次取得所有貨幣的融資交易記錄。
+   * @group v2/auth/funding
    * @param opts - 參數說明
    * - currency: 貨幣，如果未指定則回傳所有貨幣的融資記錄。
    * - limit: 回傳的交易記錄數量上限。
@@ -415,6 +549,7 @@ export class Bitfinex {
 
   /**
    * 取得已結束的融資記錄。
+   * @group v2/auth/funding
    * @param opts - 參數說明
    * - currency: 貨幣，如果未指定則回傳所有貨幣的融資記錄
    * - limit: 回傳的融資記錄數量上限，最大 `500`
@@ -458,6 +593,7 @@ export class Bitfinex {
 
   /**
    * 查看過去的分類帳記錄。預設會返回最近的記錄，但可以使用時間戳來檢索特定時間的數據，最長可以取得六年內的記錄。
+   * @group v2/auth/ledgers
    * @param opts - 參數說明
    * - currency: 貨幣，如果未指定則回傳所有貨幣的分類帳記錄
    * - category: 記錄類別，如果未指定則回傳所有類別的分類帳記錄
@@ -486,6 +622,57 @@ export class Bitfinex {
       return zod.ZodOutputV2AuthReadLedgersHist.parse(trace.resp)
     } catch (err) {
       throw _.update(err, 'data.v2AuthReadLedgersHist', old => old ?? trace)
+    }
+  }
+
+  /**
+   * 取消全部的融資掛單，如果有指定貨幣時，則只取消該貨幣全部的融資掛單。
+   * @group v2/auth/funding
+   * @param opts - 參數說明
+   * - currency: 貨幣
+   * @returns
+   * - mts: 通知的時間
+   * - type: 通知的類型，固定為 `foc_all-req` (funding offer cancel all request)
+   * - status: 通知的狀態，這個欄位可能會因時而異，可能的值為 `SUCCESS`、`ERROR`、`FAILURE`…
+   * - text: 通知的詳細內容
+   */
+  async v2AuthWriteFundingOfferCancelAll (opts: zod.InputV2AuthWriteFundingOfferCancelAll = {}): Promise<zod.OutputV2AuthWriteFundingOfferCancelAll> {
+    const trace: Record<string, any> = { opts }
+    try {
+      const opts1 = trace.opts = zod.ZodInputV2AuthWriteFundingOfferCancelAll.parse(opts)
+      trace.resp = await this.#apiPostAuth({
+        path: 'v2/auth/w/funding/offer/cancel/all',
+        body: _.pick(opts1, ['currency']),
+      })
+      return zod.ZodOutputV2AuthWriteFundingOfferCancelAll.parse(trace.resp)
+    } catch (err) {
+      throw _.update(err, 'data.v2AuthWriteFundingOfferCancelAll', old => old ?? trace)
+    }
+  }
+
+  /**
+   * 取得帳戶指定貨幣的融資資訊
+   * @group v2/auth/info
+   * @param opts - 參數說明
+   * - currency: 貨幣，預設為 `USD`
+   * @returns
+   * - currency: 貨幣
+   * - symbol: 貨幣 symbol
+   * - yieldLoan: 借貸利率的加權平均
+   * - yieldLend: 放貸利率的加權平均
+   * - durationLoan: 借貸天數的加權平均
+   * - durationLend: 放貸天數的加權平均
+   */
+  async v2AuthReadInfoFunding (opts: zod.InputV2AuthReadInfoFunding = {}): Promise<zod.OutputV2AuthReadInfoFunding> {
+    const trace: Record<string, any> = { opts }
+    try {
+      const opts1 = trace.opts = zod.ZodInputV2AuthReadInfoFunding.parse(opts)
+      trace.resp = await this.#apiPostAuth({
+        path: `v2/auth/r/info/funding/f${opts1.currency}`,
+      })
+      return zod.ZodOutputV2AuthReadInfoFunding.parse(trace.resp)
+    } catch (err) {
+      throw _.update(err, 'data.v2AuthReadInfoFunding', old => old ?? trace)
     }
   }
 }

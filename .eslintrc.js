@@ -6,6 +6,8 @@ module.exports = {
   plugins: ['eslint-plugin-tsdoc'],
   extends: ['love'],
   rules: {
+    '@typescript-eslint/consistent-indexed-object-style': 'off',
+    '@typescript-eslint/consistent-type-definitions': 'off',
     '@typescript-eslint/no-unsafe-argument': 'off',
     '@typescript-eslint/non-nullable-type-assertion-style': 'off',
     '@typescript-eslint/return-await': 'off',

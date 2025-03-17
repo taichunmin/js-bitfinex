@@ -1,0 +1,35 @@
+{
+  "cleanOutputDir": false,
+  "customCss": "./build-utils/typedoc-custom.css",
+  "darkHighlightTheme": "dark-plus",
+  "exclude": ["**/*.spec.ts", "**/*.test.ts", "**/node_modules/**"],
+  "gaID": "G-KB8ZL6LPH5",
+  "includeVersion": true,
+  "out": "dist",
+  "plugin": ["typedoc-plugin-mdn-links", "typedoc-plugin-ga"],
+  "navigationLinks": {
+    "Bitfinex API": "https://docs.bitfinex.com/reference",
+    "GitHub": "https://github.com/taichunmin/js-bitfinex",
+    "NPM": "https://www.npmjs.com/package/@taichunmin/bitfinex",
+    "jsDelivr": "https://www.jsdelivr.com/package/npm/@taichunmin/bitfinex"
+  },
+  "entryPoints": [
+    "src/index.ts",
+  ],
+  "groupOrder": [
+    "Constructors",
+    "v1",
+    "v2",
+    "v2/candles",
+    "v2/funding",
+    "v2/tickers",
+    "v2/trades",
+    "v2/auth",
+    "v2/auth/funding",
+    "v2/auth/info",
+    "v2/auth/ledgers",
+    "Properties",
+    "Methods",
+    "*"
+  ]
+}

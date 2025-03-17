@@ -1,22 +1,24 @@
 import _ from 'lodash'
 import { z } from 'zod'
 import * as enums from './enums'
+import * as utils from './utils'
 
 export * from 'zod'
 
+export type JsonArray = JsonValue[]
+export type JsonObject = { [key: string]: JsonValue }
+export type JsonPrimitive = string | number | boolean | null
+export type JsonValue = JsonPrimitive | JsonObject | JsonArray
+
 // JSON type: https://zod.dev/?id=json-type
 export const ZodJsonPrimitive = z.union([z.string(), z.number(), z.boolean(), z.null()])
-export type JsonPrimitive = z.output<typeof ZodJsonPrimitive>
-export type JsonValue = JsonPrimitive | { [key: string]: JsonValue } | JsonValue[]
 export const ZodJsonValue: z.ZodType<JsonValue> = z.lazy(() => z.union([
   ZodJsonPrimitive,
   z.array(ZodJsonValue),
   z.record(ZodJsonValue),
 ]))
 export const ZodJsonObject = z.record(ZodJsonValue)
-export type JsonObject = z.output<typeof ZodJsonObject>
 export const ZodJsonArray = z.array(ZodJsonValue)
-export type JsonArray = z.output<typeof ZodJsonArray>
 
 export const ZodAnyToUndefined = z.any().transform(() => undefined)
 
@@ -54,7 +56,7 @@ export type OutputV2TradesTradingHist = z.output<typeof ZodOutputV2TradesTrading
 
 // v2TradesFundingHist
 export const ZodInputV2TradesFundingHist = z.object({
-  currency: z.string().trim().toUpperCase().default('USD'),
+  currency: z.string().trim().regex(/^[\w:]+$/).toUpperCase().default('USD'),
   limit: z.number().int().max(10000).default(125),
   sort: ZodBitfinexSort.default(enums.BitfinexSort.DESC),
   start: z.date().transform(transformMts).optional(),
@@ -72,7 +74,8 @@ export const ZodOutputV2TradesFundingHist = z.array(z.tuple([
 export type OutputV2TradesFundingHist = z.output<typeof ZodOutputV2TradesFundingHist>
 
 // v2AuthReadPermissions
-export type OutputV2AuthReadPermissions = { [P in string]?: { read: 0 | 1, write: 0 | 1 } }
+/** @inline */
+export type OutputV2AuthReadPermissions = Record<string, { read: 0 | 1, write: 0 | 1 }>
 export const ZodOutputV2AuthReadPermissions = z.array(z.tuple([
   z.string(), // Api scope
   z.union([z.literal(0), z.literal(1)]), // Read permission: false = 0, true = 1
@@ -84,15 +87,7 @@ export const ZodOutputV2AuthReadPermissions = z.array(z.tuple([
 })
 
 // v2AuthReadWallets
-export type OutputV2AuthReadWallets = Array<{
-  type: string
-  currency: string
-  balance: number
-  unsettledInterest: number
-  availableBalance: number
-  lastChange?: Record<string, JsonValue> & { desc?: string }
-}>
-export const ZodOutputV2AuthReadWallets = z.array(z.tuple([
+const ZodOutputV2AuthReadWallet = z.tuple([
   z.string(), // Wallet name (exchange, margin, funding)
   z.string(), // Currency (e.g. USD, BTC, ETH, ...)
   z.number(), // Balance
@@ -100,19 +95,12 @@ export const ZodOutputV2AuthReadWallets = z.array(z.tuple([
   z.number(), // Wallet balance available for orders/withdrawal/transfer
   z.string().nullable(), // Description of the last ledger entry
   ZodJsonObject.nullable(), // Optional object with details of LAST_CHANGE
-]).transform(([type, currency, balance, unsettledInterest, availableBalance, lastChangeDesc, lastChange]) => ({
-  type,
-  currency,
-  balance,
-  unsettledInterest,
-  availableBalance,
-  ...(_.isNil(lastChangeDesc) && _.isNil(lastChange) ? {} : {
-    lastChange: ({
-      ...(_.isNil(lastChangeDesc) ? {} : { desc: lastChangeDesc }),
-      ...(_.isNil(lastChange) ? {} : lastChange),
-    } as unknown as Record<string, JsonValue> & { desc?: string }),
-  }),
-})))
+]).transform(([type, currency, balance, unsettledInterest, availableBalance, lastChangeDesc, lastChange]) => {
+  const tmp = _.omitBy({ ...(lastChange ?? {}), desc: lastChangeDesc }, _.isNil) as Record<string, JsonValue> & { desc: string }
+  return { type, currency, balance, unsettledInterest, availableBalance, lastChange: tmp }
+})
+export const ZodOutputV2AuthReadWallets = z.array(ZodOutputV2AuthReadWallet)
+export type OutputV2AuthReadWallets = z.output<typeof ZodOutputV2AuthReadWallets>
 
 // v2Config
 export const ZodInputV2Config = z.array(z.string().trim().regex(/^[\w:]+$/)).min(1).or(ZodAnyToUndefined)
@@ -132,7 +120,7 @@ export type OutputV1SymbolsDetails = z.output<typeof ZodOutputV1SymbolsDetails>
 
 // v2AuthReadFundingCredits
 export const ZodInputV2AuthReadFundingCredits = z.object({
-  currency: z.string().trim().toUpperCase().optional(),
+  currency: z.string().trim().regex(/^[\w:]+$/).toUpperCase().optional(),
 })
 export type InputV2AuthReadFundingCredits = z.input<typeof ZodInputV2AuthReadFundingCredits>
 export const ZodOutputV2AuthReadFundingCredits = z.array(z.tuple([
@@ -182,7 +170,7 @@ export type OutputV2AuthReadFundingCredits = z.output<typeof ZodOutputV2AuthRead
 
 // v2AuthReadFundingAutoStatus
 export const ZodInputV2AuthReadFundingAutoStatus = z.object({
-  currency: z.string().trim().toUpperCase().default('USD'),
+  currency: z.string().trim().regex(/^[\w:]+$/).toUpperCase().default('USD'),
 })
 export type InputV2AuthReadFundingAutoStatus = z.input<typeof ZodInputV2AuthReadFundingAutoStatus>
 export const ZodOutputV2AuthReadFundingAutoStatus = z.tuple([
@@ -190,12 +178,12 @@ export const ZodOutputV2AuthReadFundingAutoStatus = z.tuple([
   z.number().int(), // PERIOD: Period of the loan
   z.number(), // RATE: Rate of the loan (percentage expressed as decimal number i.e. 1% = 0.01)
   z.number(), // AMOUNT: Amount of funds provided
-]).transform(([currency, period, rate, amount]) => ({ currency, period, rate, amount }))
+]).transform(([currency, period, rate, amount]) => ({ currency, period, rate, amount })).nullable()
 export type OutputV2AuthReadFundingAutoStatus = z.output<typeof ZodOutputV2AuthReadFundingAutoStatus>
 
 // v2AuthReadFundingTradesHist
 export const ZodInputV2AuthReadFundingTradesHist = z.object({
-  currency: z.string().trim().toUpperCase().optional(),
+  currency: z.string().trim().regex(/^[\w:]+$/).toUpperCase().optional(),
   end: z.date().transform(transformMts).optional(),
   limit: z.number().int().optional(),
   start: z.date().transform(transformMts).optional(),
@@ -223,7 +211,7 @@ export type OutputV2AuthReadFundingTradesHist = z.output<typeof ZodOutputV2AuthR
 
 // v2AuthReadFundingCreditsHist
 export const ZodInputV2AuthReadFundingCreditsHist = z.object({
-  currency: z.string().trim().toUpperCase().optional(),
+  currency: z.string().trim().regex(/^[\w:]+$/).toUpperCase().optional(),
   end: z.date().transform(transformMts).optional(),
   limit: z.number().int().max(500).default(25),
   start: z.date().transform(transformMts).optional(),
@@ -291,12 +279,12 @@ export const ZodInputV2Candles = z.union([
   }),
   ZodInputV2CandlesBase.extend({
     pair: z.undefined(),
-    currency: z.string().trim().toUpperCase().default('USD'),
+    currency: z.string().trim().regex(/^[\w:]+$/).toUpperCase().default('USD'),
     period: z.number().int().default(2).transform(p => `p${p}`),
   }),
   ZodInputV2CandlesBase.extend({
     pair: z.undefined(),
-    currency: z.string().trim().toUpperCase().default('USD'),
+    currency: z.string().trim().regex(/^[\w:]+$/).toUpperCase().default('USD'),
     aggregation: z.union([z.literal(10), z.literal(30)]).default(30),
     periodEnd: z.number().int(),
     periodStart: z.number().int(),
@@ -315,7 +303,7 @@ export type OutputV2Candles = z.output<typeof ZodOutputV2Candles>
 
 // v2AuthReadLedgersHist
 export const ZodInputV2AuthReadLedgersHist = z.object({
-  currency: z.string().trim().toUpperCase().optional(),
+  currency: z.string().trim().regex(/^[\w:]+$/).toUpperCase().optional(),
   category: z.nativeEnum(enums.LedgersHistCategory).optional(),
   limit: z.number().int().max(2500).optional(),
   start: z.date().transform(transformMts).optional(),
@@ -342,3 +330,193 @@ export const ZodOutputV2AuthReadLedgersHist = z.array(z.tuple([
   description,
 })))
 export type OutputV2AuthReadLedgersHist = z.output<typeof ZodOutputV2AuthReadLedgersHist>
+
+// v2FundingStatsHist
+export const ZodInputV2FundingStatsHist = z.object({
+  currency: z.string().trim().regex(/^[\w:]+$/).toUpperCase().default('USD'),
+  start: z.date().transform(transformMts).optional(),
+  end: z.date().transform(transformMts).optional(),
+  limit: z.number().int().max(250).optional(),
+})
+export type InputV2FundingStatsHist = z.input<typeof ZodInputV2FundingStatsHist>
+export const ZodOutputV2FundingStatsHist = z.array(z.tuple([
+  z.number().int(), // MTS: Millisecond epoch timestamp
+  z.unknown(),
+  z.unknown(),
+  z.number(), // FRR: 1/365th of Flash Return Rate (To get the daily rate, use: rate x 365. To get the daily rate as percentage use: rate x 365 x 100. To get APR as percentage use rate x 100 x 365 x 365.)
+  z.number(), // AVG_PERIOD: Average period for funding provided
+  z.unknown(),
+  z.unknown(),
+  z.number(), // FUNDING_AMOUNT: Total funding provided
+  z.number(), // FUNDING_AMOUNT_USED: Total funding provided that is used in positions
+  z.unknown(),
+  z.unknown(),
+  z.number(), // FUNDING_BELOW_THRESHOLD: Sum of open funding offers < 0.75%
+]).transform(([mts,,, frr, avgPeriod,,, amount, amountUsed,,, belowThreshold]) => ({
+  mts: new Date(mts),
+  frr,
+  dpr: _.round(frr * 365 * 100, 8),
+  apr: _.round(frr * 365 * 365 * 100, 8),
+  avgPeriod,
+  amount,
+  amountUsed,
+  belowThreshold,
+})))
+export type OutputV2FundingStatsHist = z.output<typeof ZodOutputV2FundingStatsHist>
+
+// v2Tickers
+export const ZodInputV2Tickers = z.object({
+  symbols: z.union([
+    z.array(z.string().trim()).min(1).transform(symbols => symbols.join(',')),
+    z.string().trim(),
+  ]).default('ALL'),
+})
+export type InputV2Tickers = z.input<typeof ZodInputV2Tickers>
+const ZodOutputV2TickersPair = z.tuple([
+  z.string().trim().regex(/^t[\w:]+$/), // SYMBOL: The symbol of the requested ticker data
+  z.number(), // BID: Price of last highest bid
+  z.number(), // BID_SIZE: Sum of the 25 highest bid sizes
+  z.number(), // ASK: Price of last lowest ask
+  z.number(), // ASK_SIZE: Sum of the 25 lowest ask sizes
+  z.number(), // DAILY_CHANGE: Amount that the last price has changed since yesterday
+  z.number(), // DAILY_CHANGE_RELATIVE: Relative price change since yesterday (*100 for percentage change)
+  z.number(), // LAST_PRICE: Price of the last trade
+  z.number(), // VOLUME: Daily volume
+  z.number(), // HIGH: Daily high
+  z.number(), // LOW: Daily low
+]).transform(([symbol, bidPrice, bidSize, askPrice, askSize, dailyChange, dailyChangeRelative, lastPrice, volume, high, low]) => ({ symbol, bidPrice, bidSize, askPrice, askSize, dailyChange, dailyChangeRelative, lastPrice, volume, high, low }))
+const ZodOutputV2TickersCurrency = z.tuple([
+  z.string().trim().regex(/^f[\w:]+$/), // SYMBOL: The symbol of the requested ticker data
+  z.number(), // FRR: Flash Return Rate - average of all fixed rate funding over the last hour
+  z.number(), // BID: Price of last highest bid
+  z.number().int(), // BID_PERIOD: Bid period covered in days
+  z.number(), // BID_SIZE: Sum of the 25 highest bid sizes
+  z.number(), // ASK: Price of last lowest ask
+  z.number().int(), // ASK_PERIOD: Ask period covered in days
+  z.number(), // ASK_SIZE: Sum of the 25 lowest ask sizes
+  z.number(), // DAILY_CHANGE: Amount that the last price has changed since yesterday
+  z.number(), // DAILY_CHANGE_PERC: Relative price change since yesterday (*100 for percentage change)
+  z.number(), // LAST_PRICE: Price of the last trade
+  z.number(), // VOLUME: Daily volume
+  z.number(), // HIGH: Daily high
+  z.number(), // LOW: Daily low
+  z.unknown(),
+  z.unknown(),
+  z.number(), // FRR_AMOUNT_AVAILABLE: The amount of funding that is available at the Flash Return Rate
+]).transform(([symbol, frr, bidPrice, bidPeriod, bidSize, askPrice, askPeriod, askSize, dailyChange, dailyChangePerc, lastPrice, volume, high, low,,, frrAmountAvailable]) => ({
+  symbol,
+  frr,
+  dpr: _.round(frr * 100, 8),
+  apr: _.round(frr * 365 * 100, 8),
+  bidPrice,
+  bidPeriod,
+  bidSize,
+  askPrice,
+  askPeriod,
+  askSize,
+  dailyChange,
+  dailyChangePerc,
+  lastPrice,
+  volume,
+  high,
+  low,
+  frrAmountAvailable,
+}))
+export const ZodOutputV2Tickers = z.array(z.union([
+  ZodOutputV2TickersPair,
+  ZodOutputV2TickersCurrency,
+]))
+export type OutputV2Tickers = z.output<typeof ZodOutputV2Tickers>
+
+// v2AuthWriteFundingAuto
+const ZodInputV2AuthWriteFundingAutoDeactivate = z.object({
+  status: z.literal(enums.FundingAutoStatus.deactivate),
+  currency: z.string().trim().regex(/^[\w:]+$/).toUpperCase(),
+})
+const ZodInputV2AuthWriteFundingAutoActivate = z.object({
+  status: z.literal(enums.FundingAutoStatus.activate),
+  currency: z.string().trim().regex(/^[\w:]+$/).toUpperCase(),
+  period: z.number().int().min(2).max(30).optional(),
+  amount: z.union([
+    z.string().trim(),
+    z.number().min(0).transform(utils.formatAmount),
+  ]).optional(),
+  rate: z.union([
+    z.string().trim(),
+    z.number().min(0).transform(utils.formatAmount),
+  ]).optional(),
+})
+export const ZodInputV2AuthWriteFundingAuto = z.discriminatedUnion('status', [
+  ZodInputV2AuthWriteFundingAutoDeactivate,
+  ZodInputV2AuthWriteFundingAutoActivate,
+])
+export type InputV2AuthWriteFundingAuto = z.input<typeof ZodInputV2AuthWriteFundingAuto>
+const ZodOutputV2AuthWriteFundingAutoOffer = z.tuple([
+  z.string(), // CURRENCY: Currency (USD, …)
+  z.number().int(), // PERIOD: Period in days
+  z.number(), // RATE: Rate of the offer (percentage expressed as decimal number i.e. 1% = 0.01)
+  z.number(), // THRESHOLD: Max amount to be auto-renewed
+]).transform(([currency, period, rate, threshold]) => ({ currency, period, rate, threshold }))
+export const ZodOutputV2AuthWriteFundingAuto = z.tuple([
+  z.number().int(), // MTS: Seconds epoch timestamp of notification
+  z.string(), // TYPE: Notification's type ("fa-req")
+  z.number().int().nullable(), // MESSAGE_ID: Unique notification's ID
+  z.unknown(),
+  ZodOutputV2AuthWriteFundingAutoOffer.nullable(), // FUNDING_OFFER_ARRAY: An array containing data for the funding offer
+  z.number().int().nullable(), // CODE: W.I.P. (work in progress)
+  z.string(), // STATUS: Status of the notification; it may vary over time (SUCCESS, ERROR, FAILURE, ...)
+  z.string(), // TEXT: Additional notification description
+]).transform(([mts, type, msgId,, offer, code, status, text]) => ({
+  mts: new Date(mts),
+  type,
+  msgId,
+  offer,
+  code,
+  status,
+  text,
+}))
+export type OutputV2AuthWriteFundingAuto = z.output<typeof ZodOutputV2AuthWriteFundingAuto>
+
+// v2AuthWriteFundingOfferCancelAll
+export const ZodInputV2AuthWriteFundingOfferCancelAll = z.object({
+  currency: z.string().trim().regex(/^[\w:]+$/).toUpperCase().optional(),
+})
+export type InputV2AuthWriteFundingOfferCancelAll = z.input<typeof ZodInputV2AuthWriteFundingOfferCancelAll>
+export const ZodOutputV2AuthWriteFundingOfferCancelAll = z.tuple([
+  z.number().int(), // MTS: Millisecond Time Stamp of the update
+  z.string(), // TYPE: Purpose of notification ('foc_all-req' (funding offer cancel all request))
+  z.unknown(),
+  z.unknown(),
+  z.unknown(),
+  z.unknown(),
+  z.string(), // STATUS: Status of the notification; it may vary over time (SUCCESS, ERROR, FAILURE, ...)
+  z.string(), // TEXT: Text of the notification
+]).transform(([mts, type,,,,, status, text]) => ({
+  mts: new Date(mts),
+  type,
+  status,
+  text,
+}))
+export type OutputV2AuthWriteFundingOfferCancelAll = z.output<typeof ZodOutputV2AuthWriteFundingOfferCancelAll>
+
+// v2AuthReadInfoFunding
+export const ZodInputV2AuthReadInfoFunding = z.object({
+  currency: z.string().trim().regex(/^[\w:]+$/).toUpperCase().default('USD'),
+})
+export type InputV2AuthReadInfoFunding = z.input<typeof ZodInputV2AuthReadInfoFunding>
+const ZodOutputV2AuthReadInfoFundingInfo = z.tuple([
+  z.number(), // YIELD_LOAN: Weighted average rate for taken funding
+  z.number(), // YIELD_LEND: Weighted average rate for provided funding
+  z.number(), // DURATION_LOAN: Weighted average duration for taken funding
+  z.number(), // DURATION_LEND: Weighted average duration for provided funding
+]).transform(([yieldLoan, yieldLend, durationLoan, durationLend]) => ({ yieldLoan, yieldLend, durationLoan, durationLend }))
+export const ZodOutputV2AuthReadInfoFunding = z.tuple([
+  z.string(), // "sym"
+  z.string(), // SYMBOL: The symbol the information pertains to (funding currencies)
+  ZodOutputV2AuthReadInfoFundingInfo, // FUNDING_INFO_ARRAY: Contains info on the yield and duration of the user's taken and provided funding
+]).transform(([, symbol, info]) => ({
+  symbol,
+  currency: symbol.slice(1),
+  ...info,
+}))
+export type OutputV2AuthReadInfoFunding = z.output<typeof ZodOutputV2AuthReadInfoFunding>
