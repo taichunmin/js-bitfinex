@@ -1,13 +1,13 @@
 {
   "browser": "dist/bitfinex.global.js",
-  "description": "A bitfinex SDK for Node.js",
+  "description": "An unofficial implementation of the Bitfinex REST APIs written in TypeScript.",
   "homepage": "https://github.com/taichunmin/js-bitfinex",
   "jsnext:main": "dist/bitfinex.mjs",
   "license": "MIT",
   "main": "dist/bitfinex.js",
   "module": "dist/bitfinex.mjs",
   "name": "@taichunmin/bitfinex",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "author": {
     "email": "taichunmin@gmail.com",
     "name": "Chunmin Tai",

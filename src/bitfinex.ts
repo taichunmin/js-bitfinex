@@ -351,28 +351,42 @@ export class Bitfinex {
   /**
    * 取得目前 apiKey 或 token 的權限。
    * @group v2/auth
-   * @returns 回傳結果的範例如下：
+   * @example
+   * ```js
+   * apiKey = 'apiKey'
+   * apiSecret = 'apiSecret'
    *
-   * ```json
+   * await (async () => {
+   *   try {
+   *     const util = require('node:util')
+   *     const { Bitfinex } = require('@taichunmin/bitfinex')
+   *     const bitfinex = new Bitfinex({ apiKey, apiSecret })
+   *     const perms = await bitfinex.v2AuthReadPermissions()
+   *     console.log(util.inspect(perms))
+   *   } catch (err) {
+   *     console.log(err)
+   *   }
+   * })()
+   *
+   * /* Expected output:
    * {
-   *   "account": { "read": 0, "write": 0 },
-   *   "history": { "read": 1, "write": 0 },
-   *   "orders": { "read": 0, "write": 0 },
-   *   "positions": { "read": 0, "write": 0 },
-   *   "funding": { "read": 1, "write": 1 },
-   *   "settings": { "read": 0, "write": 0 },
-   *   "wallets": { "read": 1, "write": 0 },
-   *   "withdraw": { "read": 0, "write": 0 },
-   *   "ui_withdraw": { "read": 0, "write": 0 },
-   *   "bfxpay": { "read": 0, "write": 0 },
-   *   "eaas_agreement": { "read": 0, "write": 0 },
-   *   "eaas_withdraw": { "read": 0, "write": 0 },
-   *   "eaas_deposit": { "read": 0, "write": 0 },
-   *   "eaas_brokerage": { "read": 0, "write": 0 }
+   *   account: { read: false, write: false },
+   *   history: { read: true, write: false },
+   *   orders: { read: false, write: false },
+   *   positions: { read: false, write: false },
+   *   funding: { read: true, write: true },
+   *   settings: { read: false, write: false },
+   *   wallets: { read: true, write: false },
+   *   withdraw: { read: false, write: false },
+   *   ui_withdraw: { read: false, write: false },
+   *   bfxpay: { read: false, write: false },
+   *   eaas_agreement: { read: false, write: false },
+   *   eaas_withdraw: { read: false, write: false },
+   *   eaas_deposit: { read: false, write: false },
+   *   eaas_brokerage: { read: false, write: false }
    * }
+   * *\/
    * ```
-   *
-   * 其中，`0` 代表無權限，`1` 代表有權限。
    * @see [Key Permissions | BitFinex API](https://docs.bitfinex.com/reference/key-permissions)
    */
   async v2AuthReadPermissions (): Promise<zod.OutputV2AuthReadPermissions> {

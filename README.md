@@ -45,20 +45,20 @@ console.log(await Bitfinex.v2PlatformStatus())
 const bitfinex = new Bitfinex({ apiKey: 'apiKey', apiSecret: 'apiSecret' })
 console.log(await bitfinex.v2AuthReadPermissions())
 /* {
-  account: { read: 0, write: 0 },
-  history: { read: 1, write: 0 },
-  orders: { read: 0, write: 0 },
-  positions: { read: 0, write: 0 },
-  funding: { read: 1, write: 1 },
-  settings: { read: 0, write: 0 },
-  wallets: { read: 1, write: 0 },
-  withdraw: { read: 0, write: 0 },
-  ui_withdraw: { read: 0, write: 0 },
-  bfxpay: { read: 0, write: 0 },
-  eaas_agreement: { read: 0, write: 0 },
-  eaas_withdraw: { read: 0, write: 0 },
-  eaas_deposit: { read: 0, write: 0 },
-  eaas_brokerage: { read: 0, write: 0 }
+  account: { read: false, write: false },
+  history: { read: true, write: false },
+  orders: { read: false, write: false },
+  positions: { read: false, write: false },
+  funding: { read: true, write: true },
+  settings: { read: false, write: false },
+  wallets: { read: true, write: false },
+  withdraw: { read: false, write: false },
+  ui_withdraw: { read: false, write: false },
+  bfxpay: { read: false, write: false },
+  eaas_agreement: { read: false, write: false },
+  eaas_withdraw: { read: false, write: false },
+  eaas_deposit: { read: false, write: false },
+  eaas_brokerage: { read: false, write: false }
 } */
 ```
 

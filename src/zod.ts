@@ -75,16 +75,16 @@ export type OutputV2TradesFundingHist = z.output<typeof ZodOutputV2TradesFunding
 
 // v2AuthReadPermissions
 /** @inline */
-export type OutputV2AuthReadPermissions = Record<string, { read: 0 | 1, write: 0 | 1 }>
 export const ZodOutputV2AuthReadPermissions = z.array(z.tuple([
   z.string(), // Api scope
-  z.union([z.literal(0), z.literal(1)]), // Read permission: false = 0, true = 1
-  z.union([z.literal(0), z.literal(1)]), // Write permission: false = 0, true = 1
+  z.coerce.boolean(), // Read permission: false = 0, true = 1
+  z.coerce.boolean(), // Write permission: false = 0, true = 1
 ])).transform(perms => {
-  const transformed: OutputV2AuthReadPermissions = {}
-  for (const perm of perms) transformed[perm[0]] = { read: perm[1], write: perm[2] }
+  const transformed: Record<string, { read: boolean, write: boolean }> = {}
+  for (const [scope, read, write] of perms) transformed[scope] = { read, write }
   return transformed
 })
+export type OutputV2AuthReadPermissions = z.output<typeof ZodOutputV2AuthReadPermissions>
 
 // v2AuthReadWallets
 const ZodOutputV2AuthReadWallet = z.tuple([
