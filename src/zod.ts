@@ -271,24 +271,23 @@ const ZodInputV2CandlesBase = z.object({
   start: z.date().transform(transformMts).optional(),
   end: z.date().transform(transformMts).optional(),
 })
+export const ZodInputV2CandlesPair = ZodInputV2CandlesBase.extend({
+  pair: z.string().trim().regex(/^[\w:]+$/).toUpperCase(),
+})
+export const ZodInputV2CandlesCurrencyPeriod1 = ZodInputV2CandlesBase.extend({
+  currency: z.string().trim().regex(/^[\w:]+$/).toUpperCase(),
+  period: z.number().int().default(2).transform(p => `p${p}`),
+})
+export const ZodInputV2CandlesCurrencyPeriod2 = ZodInputV2CandlesBase.extend({
+  currency: z.string().trim().regex(/^[\w:]+$/).toUpperCase(),
+  aggregation: z.union([z.literal(10), z.literal(30)]).default(30),
+  periodEnd: z.number().int(),
+  periodStart: z.number().int(),
+}).transform(({ aggregation, periodStart, periodEnd, ...others }) => ({ ...others, period: `a${aggregation}:p${periodStart}:p${periodEnd}` }))
 export const ZodInputV2Candles = z.union([
-  ZodInputV2CandlesBase.extend({
-    currency: z.undefined(),
-    period: z.undefined(),
-    pair: z.string().trim().toUpperCase().default('BTCUSD'),
-  }),
-  ZodInputV2CandlesBase.extend({
-    pair: z.undefined(),
-    currency: z.string().trim().regex(/^[\w:]+$/).toUpperCase().default('USD'),
-    period: z.number().int().default(2).transform(p => `p${p}`),
-  }),
-  ZodInputV2CandlesBase.extend({
-    pair: z.undefined(),
-    currency: z.string().trim().regex(/^[\w:]+$/).toUpperCase().default('USD'),
-    aggregation: z.union([z.literal(10), z.literal(30)]).default(30),
-    periodEnd: z.number().int(),
-    periodStart: z.number().int(),
-  }).transform(({ aggregation, periodStart, periodEnd, ...others }) => ({ ...others, period: `a${aggregation}:p${periodStart}:p${periodEnd}` })),
+  ZodInputV2CandlesPair,
+  ZodInputV2CandlesCurrencyPeriod1,
+  ZodInputV2CandlesCurrencyPeriod2,
 ])
 export type InputV2Candles = z.input<typeof ZodInputV2Candles>
 export const ZodOutputV2Candles = z.array(z.tuple([
@@ -436,7 +435,7 @@ const ZodInputV2AuthWriteFundingAutoDeactivate = z.object({
 const ZodInputV2AuthWriteFundingAutoActivate = z.object({
   status: z.literal(enums.FundingAutoStatus.activate),
   currency: z.string().trim().regex(/^[\w:]+$/).toUpperCase(),
-  period: z.number().int().min(2).max(30).optional(),
+  period: z.number().int().min(2).max(120).optional(),
   amount: z.union([
     z.string().trim(),
     z.number().min(0).transform(utils.formatAmount),
@@ -520,3 +519,21 @@ export const ZodOutputV2AuthReadInfoFunding = z.tuple([
   ...info,
 }))
 export type OutputV2AuthReadInfoFunding = z.output<typeof ZodOutputV2AuthReadInfoFunding>
+
+// v2IntGeoIp
+const ZodOutputV2IntGeoIpGeo = z.object({
+  range: z.tuple([z.number(), z.number()]),
+  country: z.string(),
+  region: z.string(),
+  eu: z.string().transform(eu => eu === '1'),
+  timezone: z.string(),
+  city: z.string(),
+  ll: z.tuple([z.number(), z.number()]),
+  metro: z.number(),
+  area: z.number(),
+})
+export const ZodOutputV2IntGeoIp = z.tuple([
+  z.string(), // IP
+  ZodOutputV2IntGeoIpGeo,
+]).transform(([ip, geoip]) => ({ ip, ...geoip }))
+export type OutputV2IntGeoIp = z.output<typeof ZodOutputV2IntGeoIp>

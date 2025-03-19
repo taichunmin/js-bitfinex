@@ -223,16 +223,11 @@ export class Bitfinex {
   }
 
   /**
-   * 取得融資的 K 線圖。
+   * 取得指定交易對 `pair` 的 K 線圖。
    * @group v2/candles
    * @param opts - 參數說明
    * - timeframe: 時間框架，預設為 `1h`
    * - pair: 交易對，預設為 `BTCUSD`
-   * - currency: 貨幣，預設為 `USD`
-   * - period: 融資天數，預設為 2
-   * - periodStart: 融資天數的開始範圍
-   * - periodEnd: 融資天數的結束範圍
-   * - aggregation: 資料聚合的方式，可指定 `10` 或 `30`，預設為 `30`
    * - section: `hist` 代表歷史記錄，`last` 代表最新資料，預設為 `hist`
    * - limit: 資料筆數的上限，最大 `10000`
    * - sort: 根據 `mts` 欄位將交易記錄以指定的方式進行排序，預設為 `BitfinexSort.DESC`
@@ -247,17 +242,67 @@ export class Bitfinex {
    * - volume: 成交量
    * @see [Candles | BitFinex API](https://docs.bitfinex.com/reference/rest-public-candles)
    */
-  static async v2Candles (opts: zod.InputV2Candles = {}): Promise<zod.OutputV2Candles> {
+  static async v2Candles (opts?: zod.z.input<typeof zod.ZodInputV2CandlesPair>): Promise<zod.OutputV2Candles>
+
+  /**
+   * 取得指定融資貨幣 `currency` 的 K 線圖。
+   * @group v2/candles
+   * @param opts - 參數說明
+   * - timeframe: 時間框架，預設為 `1h`
+   * - currency: 貨幣，預設為 `USD`
+   * - period: 融資天數，預設為 2
+   * - section: `hist` 代表歷史記錄，`last` 代表最新資料，預設為 `hist`
+   * - limit: 資料筆數的上限，最大 `10000`
+   * - sort: 根據 `mts` 欄位將交易記錄以指定的方式進行排序，預設為 `BitfinexSort.DESC`
+   * - start: 回傳的交易記錄中，`mts` 欄位不小於此值
+   * - end: 回傳的交易記錄中，`mts` 欄位不大於此值
+   * @returns
+   * - mts: 成交時間
+   * - open: 開盤利率
+   * - close: 收盤利率
+   * - high: 最高利率
+   * - low: 最低利率
+   * - volume: 成交量
+   * @see [Candles | BitFinex API](https://docs.bitfinex.com/reference/rest-public-candles)
+   */
+  static async v2Candles (opts?: zod.z.input<typeof zod.ZodInputV2CandlesCurrencyPeriod1>): Promise<zod.OutputV2Candles>
+
+  /**
+   * 取得指定融資貨幣 `currency` 的 K 線圖。
+   * @group v2/candles
+   * @param opts - 參數說明
+   * - timeframe: 時間框架，預設為 `1h`
+   * - currency: 貨幣，預設為 `USD`
+   * - periodStart: 融資天數的開始範圍
+   * - periodEnd: 融資天數的結束範圍
+   * - aggregation: 資料聚合的方式，可指定 `10` 或 `30`，預設為 `30`
+   * - section: `hist` 代表歷史記錄，`last` 代表最新資料，預設為 `hist`
+   * - limit: 資料筆數的上限，最大 `10000`
+   * - sort: 根據 `mts` 欄位將交易記錄以指定的方式進行排序，預設為 `BitfinexSort.DESC`
+   * - start: 回傳的交易記錄中，`mts` 欄位不小於此值
+   * - end: 回傳的交易記錄中，`mts` 欄位不大於此值
+   * @returns
+   * - mts: 成交時間
+   * - open: 開盤利率
+   * - close: 收盤利率
+   * - high: 最高利率
+   * - low: 最低利率
+   * - volume: 成交量
+   * @see [Candles | BitFinex API](https://docs.bitfinex.com/reference/rest-public-candles)
+   */
+  static async v2Candles (opts?: zod.z.input<typeof zod.ZodInputV2CandlesCurrencyPeriod2>): Promise<zod.OutputV2Candles>
+
+  static async v2Candles (opts: any = {}): Promise<zod.OutputV2Candles> {
     const trace: Record<string, any> = { opts }
     try {
-      const opts1 = trace.opts = zod.ZodInputV2Candles.parse(opts)
+      const opts1 = trace.opts = zod.ZodInputV2Candles.parse(opts) as zod.z.output<typeof zod.ZodInputV2Candles> & Record<string, undefined>
       if (_.isString(opts1.pair)) trace.candle = `trade:${opts1.timeframe}:t${opts1.pair}`
       else if (_.isString(opts1.currency)) trace.candle = `trade:${opts1.timeframe}:f${opts1.currency}:${opts1.period}`
       if (!_.isString(trace.candle)) throw new Error('invalid pair or currency')
       trace.resp = await Bitfinex.#apiGetPub({
         path: `v2/candles/${trace.candle}/${opts1.section}`,
+        query: _.omitBy<any>(_.pick(opts1, ['sort', 'start', 'end', 'limit']), _.isNil),
       })
-      console.log(trace.resp)
       return zod.ZodOutputV2Candles.parse(trace.resp)
     } catch (err) {
       throw _.update(err, 'data.v2Candles', old => old ?? trace)
@@ -345,6 +390,34 @@ export class Bitfinex {
       return zod.ZodOutputV2Tickers.parse(trace.resp)
     } catch (err) {
       throw _.update(err, 'data.v2Tickers', old => old ?? trace)
+    }
+  }
+
+  /**
+   * 取得目前 IP 位址的 GeoIp 資訊。
+   * @group v2
+   * @returns
+   * - ip: IP 位址
+   * - range: IP 區塊的上下界
+   * - country: 2 letter ISO-3166-1 country code
+   * - region: Up to 3 alphanumeric variable length characters as ISO 3166-2 code, For US states this is the 2 letter state, For the United Kingdom this could be ENG as a country like “England", FIPS 10-4 subcountry code
+   * - eu: `1` if the country is a member state of the European Union, `0` otherwise.
+   * - timezone: Timezone from IANA Time Zone Database
+   * - city: full city name
+   * - ll: The latitude and longitude of the city
+   * - metro: Metro code
+   * - area: The approximate accuracy radius (km), around the latitude and longitude
+   * @see [geoip-lite](https://www.npmjs.com/package/geoip-lite)
+   */
+  static async v2IntGeoIp (): Promise<zod.OutputV2IntGeoIp> {
+    const trace: Record<string, any> = {}
+    try {
+      trace.resp = await Bitfinex.#apiGetPub({
+        path: 'v2/int/geo/ip',
+      })
+      return zod.ZodOutputV2IntGeoIp.parse(trace.resp)
+    } catch (err) {
+      throw _.update(err, 'data.v2IntGeoIp', old => old ?? trace)
     }
   }
 
