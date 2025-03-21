@@ -351,11 +351,11 @@ export const ZodOutputV2FundingStatsHist = z.array(z.tuple([
   z.unknown(),
   z.unknown(),
   z.number(), // FUNDING_BELOW_THRESHOLD: Sum of open funding offers < 0.75%
-]).transform(([mts,,, frr, avgPeriod,,, amount, amountUsed,,, belowThreshold]) => ({
+]).transform(([mts,,, frrDiv365, avgPeriod,,, amount, amountUsed,,, belowThreshold]) => ({
   mts: new Date(mts),
-  frr,
-  dpr: _.round(frr * 365 * 100, 8),
-  apr: _.round(frr * 365 * 365 * 100, 8),
+  frrDiv365,
+  frr: _.round(frrDiv365 * 365, 8),
+  apr: _.round(frrDiv365 * 133225, 8), // 133225 = 365 * 365
   avgPeriod,
   amount,
   amountUsed,

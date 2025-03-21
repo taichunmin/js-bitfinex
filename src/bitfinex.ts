@@ -319,9 +319,9 @@ export class Bitfinex {
    * - end: 回傳的融資統計記錄中，`mts` 欄位不大於此值
    * @returns
    * - mts: 融資統計記錄的產生時間
+   * - frrDiv365: [Flash Return Rate](https://support.bitfinex.com/hc/en-us/articles/213919009-What-is-the-Bitfinex-Funding-Flash-Return-Rate) 除以 365
    * - frr: [Flash Return Rate](https://support.bitfinex.com/hc/en-us/articles/213919009-What-is-the-Bitfinex-Funding-Flash-Return-Rate)
-   * - dpr: Daily Percentage Rate，由公式 `frr * 100 * 365` 計算產生
-   * - apr: Annual Percentage Rate，由公式 `frr * 100 * 365 * 365` 計算產生
+   * - apr: 年利率 Annual Percentage Rate，由公式 `frr * 365` 計算產生
    * - avgPeriod: 平均融資天數
    * - amount: 融資貨幣總數量
    * - amountUsed: 已使用的融資貨幣數量
