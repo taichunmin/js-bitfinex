@@ -140,7 +140,7 @@ export class Bitfinex {
    * 取得指定交易對的成交記錄。
    * @group v2/trades
    * @param opts - 參數說明
-   * - pair: 交易對，預設為 `BTCUSD`
+   * - pair: 交易對代碼，預設為 `BTCUSD`
    * - limit: 回傳的交易記錄數量上限，最大 `10000`，預設為 `125`
    * - sort: 根據 `mts` 欄位將交易記錄以指定的方式進行排序，預設為 `BitfinexSort.DESC`
    * - start: 回傳的交易記錄中，`mts` 欄位不小於此值
@@ -170,7 +170,7 @@ export class Bitfinex {
    * 取得指定貨幣的融資成交記錄。
    * @group v2/trades
    * @param opts - 參數說明
-   * - currency: 貨幣，預設為 `USD`
+   * - currency: 貨幣代碼，預設為 `USD`
    * - limit: 回傳的交易記錄數量上限，最大 `10000`，預設為 `125`
    * - sort: 根據 `mts` 欄位將交易記錄以指定的方式進行排序，預設為 `BitfinexSort.DESC`
    * - start: 回傳的交易記錄中，`mts` 欄位不小於此值
@@ -201,7 +201,7 @@ export class Bitfinex {
    * 取得 Bitfinex 所有交易對的詳細資訊。
    * @group v1
    * @returns
-   * - pair: 交易對
+   * - pair: 交易對代碼
    * - price_precision: 價格小數點精確度
    * - initial_margin: 初始保證金百分比
    * - minimum_margin: 最低保證金百分比
@@ -227,7 +227,7 @@ export class Bitfinex {
    * @group v2/candles
    * @param opts - 參數說明
    * - timeframe: 時間框架，預設為 `1h`
-   * - pair: 交易對，預設為 `BTCUSD`
+   * - pair: 交易對代碼，預設為 `BTCUSD`
    * - section: `hist` 代表歷史記錄，`last` 代表最新資料，預設為 `hist`
    * - limit: 資料筆數的上限，最大 `10000`
    * - sort: 根據 `mts` 欄位將交易記錄以指定的方式進行排序，預設為 `BitfinexSort.DESC`
@@ -249,7 +249,7 @@ export class Bitfinex {
    * @group v2/candles
    * @param opts - 參數說明
    * - timeframe: 時間框架，預設為 `1h`
-   * - currency: 貨幣，預設為 `USD`
+   * - currency: 貨幣代碼，預設為 `USD`
    * - period: 融資天數，預設為 2
    * - section: `hist` 代表歷史記錄，`last` 代表最新資料，預設為 `hist`
    * - limit: 資料筆數的上限，最大 `10000`
@@ -272,7 +272,7 @@ export class Bitfinex {
    * @group v2/candles
    * @param opts - 參數說明
    * - timeframe: 時間框架，預設為 `1h`
-   * - currency: 貨幣，預設為 `USD`
+   * - currency: 貨幣代碼，預設為 `USD`
    * - periodStart: 融資天數的開始範圍
    * - periodEnd: 融資天數的結束範圍
    * - aggregation: 資料聚合的方式，可指定 `10` 或 `30`，預設為 `30`
@@ -313,7 +313,7 @@ export class Bitfinex {
    * 取得指定貨幣最近的融資統計記錄
    * @group v2/funding
    * @param opts - 參數說明
-   * - currency: 貨幣，預設為 `USD`
+   * - currency: 貨幣代碼，預設為 `USD`
    * - limit: 回傳的融資統計記錄數量上限，最大 `250`
    * - start: 回傳的融資統計記錄中，`mts` 欄位不小於此值
    * - end: 回傳的融資統計記錄中，`mts` 欄位不大於此值
@@ -343,13 +343,62 @@ export class Bitfinex {
   }
 
   /**
-   * 取得交易對以及融資目前的行情概覽。它會回傳當前最佳買入價和賣出價、最近成交價，以及昨日至今的每日成交量和價格變動資訊。並允許同時取得多個交易對及融資的行情資訊。
-   * @group v2/tickers
+   * 取得指定交易對目前的行情概覽。它會回傳當前最佳買入價和賣出價、最近成交價，以及昨日至今的每日成交量和價格變動資訊。
+   * @group v2
    * @param opts - 參數說明
-   * - symbols: 交易對或融資代碼的陣列，或指定 ALL 取得全部的行情概覽，預設為 `ALL`。
+   * - pair: 交易對代碼
+   * @returns
+   * - symbol: 交易對代碼
+   * - pair: 交易對代碼
+   * - bidPrice: 最高的買入價
+   * - bidSize: 最高的 25 個買入價總數量
+   * - askPrice: 最低的賣出價
+   * - askSize: 最低的 25 個賣出價總數量
+   * - dailyChange: 昨日至今的價格變化量
+   * - dailyChangeRelative: 昨日至今的相對價格變化（乘以 100 即為百分比變化）
+   * - lastPrice: 最新成交價
+   * - volume: 昨日至今的成交量
+   * - high: 昨日至今的最高價
+   * - low: 昨日至今的最低價
+   */
+  static async v2Ticker (opts: zod.InputV2TickerPair): Promise<zod.OutputV2TickerPair>
+
+  /**
+   * 取得指定融資貨幣目前的行情概覽。它會回傳當前最佳買入價和賣出價、最近成交價，以及昨日至今的每日成交量和價格變動資訊。
+   * @group v2
+   * @param opts - 參數說明
+   * - currency: 貨幣代碼
+   * @returns
+   * - symbol: 融資貨幣
+   * - currency: 貨幣代碼
+   * - frr: [Flash Return Rate](https://support.bitfinex.com/hc/en-us/articles/213919009-What-is-the-Bitfinex-Funding-Flash-Return-Rate)
+   * - dpr: Daily Percentage Rate，由公式 `frr * 100` 計算產生
+   * - apr: Annual Percentage Rate，由公式 `frr * 100 * 365` 計算產生
+   * - bidPrice: 最高的貸款利率
+   * - bidPeriod: 最高貸款利率的天數
+   * - bidSize: 最高的 25 個貸款利率的總數量
+   * - askPrice: 最低的放款利率
+   * - askPeriod: 最低放款利率的天數
+   * - askSize: 最低的 25 個放款利率的總數量
+   * - dailyChange: 昨日至今的利率變化量
+   * - dailyChangePerc: 昨日至今的相對利率變化（乘以 100 即為百分比變化）
+   * - lastPrice: 最新成交利率
+   * - volume: 昨日至今的成交量
+   * - high: 昨日至今的最高利率
+   * - low: 昨日至今的最低利率
+   * - frrAmountAvailable: 以 FRR 進行貸款或放款的數量
+   */
+  static async v2Ticker (opts: zod.InputV2TickerCurrency): Promise<zod.OutputV2TickerCurrency>
+
+  /**
+   * 取得指定交易對或融資貨幣目前的行情概覽。它會回傳當前最佳買入價和賣出價、最近成交價，以及昨日至今的每日成交量和價格變動資訊。
+   * @group v2
+   * @param opts - 參數說明
+   * - symbol: 交易對或融資貨幣
    * @returns
    * - 交易對的行情概覽欄位
    *     - symbol: 交易對代碼
+   *     - pair: 交易對代碼
    *     - bidPrice: 最高的買入價
    *     - bidSize: 最高的 25 個買入價總數量
    *     - askPrice: 最低的賣出價
@@ -361,7 +410,62 @@ export class Bitfinex {
    *     - high: 昨日至今的最高價
    *     - low: 昨日至今的最低價
    * - 融資的行情概覽欄位
-   *     - symbol: 融資代碼
+   *     - symbol: 貨幣代碼
+   *     - currency: 貨幣代碼
+   *     - frr: [Flash Return Rate](https://support.bitfinex.com/hc/en-us/articles/213919009-What-is-the-Bitfinex-Funding-Flash-Return-Rate)
+   *     - dpr: Daily Percentage Rate，由公式 `frr * 100` 計算產生
+   *     - apr: Annual Percentage Rate，由公式 `frr * 100 * 365` 計算產生
+   *     - bidPrice: 最高的貸款利率
+   *     - bidPeriod: 最高貸款利率的天數
+   *     - bidSize: 最高的 25 個貸款利率的總數量
+   *     - askPrice: 最低的放款利率
+   *     - askPeriod: 最低放款利率的天數
+   *     - askSize: 最低的 25 個放款利率的總數量
+   *     - dailyChange: 昨日至今的利率變化量
+   *     - dailyChangePerc: 昨日至今的相對利率變化（乘以 100 即為百分比變化）
+   *     - lastPrice: 最新成交利率
+   *     - volume: 昨日至今的成交量
+   *     - high: 昨日至今的最高利率
+   *     - low: 昨日至今的最低利率
+   *     - frrAmountAvailable: 以 FRR 進行貸款或放款的數量
+   */
+  static async v2Ticker (opts: zod.InputV2TickerSymbol): Promise<zod.OutputV2TickerPair | zod.OutputV2TickerCurrency>
+
+  static async v2Ticker (opts: zod.InputV2Ticker): Promise<zod.OutputV2TickerPair | zod.OutputV2TickerCurrency> {
+    const trace: Record<string, any> = { opts }
+    try {
+      const symbol = trace.symbol = zod.ZodInputV2Ticker.parse(opts)
+      trace.resp = await Bitfinex.#apiGetPub({
+        path: `v2/ticker/${symbol}`,
+      })
+      return zod.ZodOutputV2Ticker.parse([symbol, ...trace.resp])
+    } catch (err) {
+      throw _.update(err, 'data.v2Ticker', old => old ?? trace)
+    }
+  }
+
+  /**
+   * 取得交易對以及融資目前的行情概覽。它會回傳當前最佳買入價和賣出價、最近成交價，以及昨日至今的每日成交量和價格變動資訊。這個 API 允許同時取得多個交易對及融資的行情資訊。
+   * @group v2
+   * @param opts - 參數說明
+   * - symbols: 交易對或融資貨幣的陣列，或指定 ALL 取得全部的行情概覽，預設為 `ALL`。
+   * @returns
+   * - 交易對的行情概覽欄位
+   *     - symbol: 交易對代碼
+   *     - pair: 交易對代碼
+   *     - bidPrice: 最高的買入價
+   *     - bidSize: 最高的 25 個買入價總數量
+   *     - askPrice: 最低的賣出價
+   *     - askSize: 最低的 25 個賣出價總數量
+   *     - dailyChange: 昨日至今的價格變化量
+   *     - dailyChangeRelative: 昨日至今的相對價格變化（乘以 100 即為百分比變化）
+   *     - lastPrice: 最新成交價
+   *     - volume: 昨日至今的成交量
+   *     - high: 昨日至今的最高價
+   *     - low: 昨日至今的最低價
+   * - 融資的行情概覽欄位
+   *     - symbol: 貨幣代碼
+   *     - currency: 貨幣代碼
    *     - frr: [Flash Return Rate](https://support.bitfinex.com/hc/en-us/articles/213919009-What-is-the-Bitfinex-Funding-Flash-Return-Rate)
    *     - dpr: Daily Percentage Rate，由公式 `frr * 100` 計算產生
    *     - apr: Annual Percentage Rate，由公式 `frr * 100 * 365` 計算產生
@@ -390,6 +494,35 @@ export class Bitfinex {
       return zod.ZodOutputV2Tickers.parse(trace.resp)
     } catch (err) {
       throw _.update(err, 'data.v2Tickers', old => old ?? trace)
+    }
+  }
+
+  /**
+   * 取得指定交易對行情概覽的歷史記錄，它會回傳以小時為單位的最佳買入價及賣出價。
+   * @group v2
+   * @param opts - 參數說明
+   * - symbols: 交易對的陣列，或指定 ALL 取得全部的行情概覽，預設為 `ALL`。目前不支援融資貨幣。
+   * - start: 回傳的記錄中，`mts` 欄位不小於此值
+   * - end: 回傳的記錄中，`mts` 欄位不大於此值
+   * - limit: 回傳的記錄數量上限，最大 `250`，預設為 `125`
+   * @returns
+   * - symbol: 交易對代碼
+   * - pair: 交易對代碼
+   * - bidPrice: 最高的買入價
+   * - askPrice: 最低的賣出價
+   * - mts: 記錄的時間
+   */
+  static async v2TickersHist (opts: zod.InputV2TickersHist = {}): Promise<zod.OutputV2TickersHist> {
+    const trace: Record<string, any> = { opts }
+    try {
+      const opts1 = trace.opts = zod.ZodInputV2TickersHist.parse(opts)
+      trace.resp = await Bitfinex.#apiGetPub({
+        path: 'v2/tickers/hist',
+        query: _.pick(opts1, ['symbols', 'start', 'end', 'limit']),
+      })
+      return zod.ZodOutputV2TickersHist.parse(trace.resp)
+    } catch (err) {
+      throw _.update(err, 'data.v2TickersHist', old => old ?? trace)
     }
   }
 
@@ -479,7 +612,7 @@ export class Bitfinex {
    * @group v2/auth
    * @returns
    * - type: 錢包類型
-   * - currency: 貨幣
+   * - currency: 貨幣代碼
    * - balance: 餘額
    * - unsettledInterest: 未結算的資金
    * - availableBalance: 可動用餘額
@@ -503,7 +636,7 @@ export class Bitfinex {
    * 取得目前出借中或是借入中的融資記錄。
    * @group v2/auth/funding
    * @param opts - 參數說明
-   * - currency: 貨幣，如果未指定則回傳所有貨幣的融資記錄。
+   * - currency: 貨幣代碼，如果未指定則回傳所有貨幣的融資記錄。
    * @returns
    * - id: 融資記錄 ID
    * - symbol: 貨幣符號
@@ -543,9 +676,9 @@ export class Bitfinex {
    * 取得指定融資貨幣的自動借出設定
    * @group v2/auth/funding
    * @param opts - 參數說明
-   * - currency: 貨幣
+   * - currency: 貨幣代碼
    * @returns
-   * - currency: 貨幣
+   * - currency: 貨幣代碼
    * - period: 融資天數
    * - rate: 融資利率
    * - amount: 融資最大數量，`0` 代表無限制
@@ -571,7 +704,7 @@ export class Bitfinex {
    * @group v2/auth/funding
    * @param opts - 參數說明
    * - status: `1` 代表啟用、`0` 代表停用
-   * - currency: 貨幣
+   * - currency: 貨幣代碼
    * - amount: 融資自動借出的數量，最小為 50 USD 或等值的融資貨幣，`0` 代表無上限
    * - period: 融資天數，預設為 `2`
    * - rate: 融資利率 (單位：百分比)，省略或 `0` 代表套用 FRR 浮動利率
@@ -579,7 +712,7 @@ export class Bitfinex {
    * - mts: 通知的時間
    * - type: 通知的類型，固定為 `fa-req`
    * - msgId: 訊息 ID
-   * - offer.currency: 貨幣
+   * - offer.currency: 貨幣代碼
    * - offer.period: 融資天數
    * - offer.rate: 融資利率
    * - offer.threshold: 融資自動借出的數量，`0` 代表無上限
@@ -605,7 +738,7 @@ export class Bitfinex {
    * 取得已掛單融資的交易記錄。可以用來查詢特定貨幣的融資交易記錄，或是一次取得所有貨幣的融資交易記錄。
    * @group v2/auth/funding
    * @param opts - 參數說明
-   * - currency: 貨幣，如果未指定則回傳所有貨幣的融資記錄。
+   * - currency: 貨幣代碼，如果未指定則回傳所有貨幣的融資記錄。
    * - limit: 回傳的交易記錄數量上限。
    * - start: 回傳的交易記錄中，`mts` 欄位不小於此值
    * - end: 回傳的交易記錄中，`mts` 欄位不大於此值
@@ -638,13 +771,13 @@ export class Bitfinex {
    * 取得已結束的融資記錄。
    * @group v2/auth/funding
    * @param opts - 參數說明
-   * - currency: 貨幣，如果未指定則回傳所有貨幣的融資記錄
+   * - currency: 貨幣代碼，如果未指定則回傳所有貨幣的融資記錄
    * - limit: 回傳的融資記錄數量上限，最大 `500`
    * - start: 回傳的融資記錄中，`mts` 欄位不小於此值
    * - end: 回傳的融資記錄中，`mts` 欄位不大於此值
    * @returns
    * - id: 融資記錄 ID
-   * - symbol: 貨幣符號
+   * - symbol: 貨幣代碼
    * - side: 融資方向，`1` 代表為貸方，`0` 代表同時為貸方與借款人，`-1` 代表為借款人
    * - amount: 融資金額
    * - flags: 融資參數 (目前未定義)
@@ -682,14 +815,14 @@ export class Bitfinex {
    * 查看過去的分類帳記錄。預設會返回最近的記錄，但可以使用時間戳來檢索特定時間的數據，最長可以取得六年內的記錄。
    * @group v2/auth/ledgers
    * @param opts - 參數說明
-   * - currency: 貨幣，如果未指定則回傳所有貨幣的分類帳記錄
+   * - currency: 貨幣代碼，如果未指定則回傳所有貨幣的分類帳記錄
    * - category: 記錄類別，如果未指定則回傳所有類別的分類帳記錄
    * - limit: 回傳的分類帳記錄數量上限，最大 `2500`
    * - start: 回傳的分類帳記錄中，`mts` 欄位不小於此值
    * - end: 回傳的分類帳記錄中，`mts` 欄位不大於此值
    * @returns
    * - id: Ledger ID
-   * - currency: 貨幣
+   * - currency: 貨幣代碼
    * - wallet: 錢包類型
    * - mts: 記錄時間
    * - amount: 異動金額
@@ -716,7 +849,7 @@ export class Bitfinex {
    * 取消全部的融資掛單，如果有指定貨幣時，則只取消該貨幣全部的融資掛單。
    * @group v2/auth/funding
    * @param opts - 參數說明
-   * - currency: 貨幣
+   * - currency: 貨幣代碼
    * @returns
    * - mts: 通知的時間
    * - type: 通知的類型，固定為 `foc_all-req` (funding offer cancel all request)
@@ -741,10 +874,10 @@ export class Bitfinex {
    * 取得帳戶指定貨幣的融資資訊
    * @group v2/auth/info
    * @param opts - 參數說明
-   * - currency: 貨幣，預設為 `USD`
+   * - currency: 貨幣代碼，預設為 `USD`
    * @returns
-   * - currency: 貨幣
-   * - symbol: 貨幣 symbol
+   * - currency: 貨幣代碼
+   * - symbol: 貨幣代碼
    * - yieldLoan: 借貸利率的加權平均
    * - yieldLend: 放貸利率的加權平均
    * - durationLoan: 借貸天數的加權平均

@@ -363,15 +363,26 @@ export const ZodOutputV2FundingStatsHist = z.array(z.tuple([
 })))
 export type OutputV2FundingStatsHist = z.output<typeof ZodOutputV2FundingStatsHist>
 
-// v2Tickers
-export const ZodInputV2Tickers = z.object({
-  symbols: z.union([
-    z.array(z.string().trim()).min(1).transform(symbols => symbols.join(',')),
-    z.string().trim(),
-  ]).default('ALL'),
-})
-export type InputV2Tickers = z.input<typeof ZodInputV2Tickers>
-const ZodOutputV2TickersPair = z.tuple([
+// v2Ticker
+export const ZodInputV2TickerPair = z.object({
+  pair: z.string().trim().regex(/^[\w:]+$/).toUpperCase(),
+}).transform(({ pair }) => `t${pair}`)
+export type InputV2TickerPair = z.input<typeof ZodInputV2TickerPair>
+export const ZodInputV2TickerCurrency = z.object({
+  currency: z.string().trim().regex(/^[\w:]+$/).toUpperCase(),
+}).transform(({ currency }) => `f${currency}`)
+export type InputV2TickerCurrency = z.input<typeof ZodInputV2TickerCurrency>
+export const ZodInputV2TickerSymbol = z.object({
+  symbol: z.string().trim().regex(/^[\w:]+$/),
+}).transform(({ symbol }) => symbol)
+export type InputV2TickerSymbol = z.input<typeof ZodInputV2TickerSymbol>
+export const ZodInputV2Ticker = z.union([
+  ZodInputV2TickerPair,
+  ZodInputV2TickerCurrency,
+  ZodInputV2TickerSymbol,
+])
+export type InputV2Ticker = z.input<typeof ZodInputV2Ticker>
+export const ZodOutputV2TickerPair = z.tuple([
   z.string().trim().regex(/^t[\w:]+$/), // SYMBOL: The symbol of the requested ticker data
   z.number(), // BID: Price of last highest bid
   z.number(), // BID_SIZE: Sum of the 25 highest bid sizes
@@ -383,8 +394,22 @@ const ZodOutputV2TickersPair = z.tuple([
   z.number(), // VOLUME: Daily volume
   z.number(), // HIGH: Daily high
   z.number(), // LOW: Daily low
-]).transform(([symbol, bidPrice, bidSize, askPrice, askSize, dailyChange, dailyChangeRelative, lastPrice, volume, high, low]) => ({ symbol, bidPrice, bidSize, askPrice, askSize, dailyChange, dailyChangeRelative, lastPrice, volume, high, low }))
-const ZodOutputV2TickersCurrency = z.tuple([
+]).transform(([symbol, bidPrice, bidSize, askPrice, askSize, dailyChange, dailyChangeRelative, lastPrice, volume, high, low]) => ({
+  symbol,
+  pair: symbol.slice(1),
+  bidPrice,
+  bidSize,
+  askPrice,
+  askSize,
+  dailyChange,
+  dailyChangeRelative,
+  lastPrice,
+  volume,
+  high,
+  low,
+}))
+export type OutputV2TickerPair = z.output<typeof ZodOutputV2TickerPair>
+const ZodOutputV2TickerCurrency = z.tuple([
   z.string().trim().regex(/^f[\w:]+$/), // SYMBOL: The symbol of the requested ticker data
   z.number(), // FRR: Flash Return Rate - average of all fixed rate funding over the last hour
   z.number(), // BID: Price of last highest bid
@@ -404,6 +429,7 @@ const ZodOutputV2TickersCurrency = z.tuple([
   z.number(), // FRR_AMOUNT_AVAILABLE: The amount of funding that is available at the Flash Return Rate
 ]).transform(([symbol, frr, bidPrice, bidPeriod, bidSize, askPrice, askPeriod, askSize, dailyChange, dailyChangePerc, lastPrice, volume, high, low,,, frrAmountAvailable]) => ({
   symbol,
+  currency: symbol.slice(1),
   frr,
   dpr: _.round(frr * 100, 8),
   apr: _.round(frr * 365 * 100, 8),
@@ -421,11 +447,57 @@ const ZodOutputV2TickersCurrency = z.tuple([
   low,
   frrAmountAvailable,
 }))
-export const ZodOutputV2Tickers = z.array(z.union([
-  ZodOutputV2TickersPair,
-  ZodOutputV2TickersCurrency,
-]))
+export type OutputV2TickerCurrency = z.output<typeof ZodOutputV2TickerCurrency>
+export const ZodOutputV2Ticker = z.union([
+  ZodOutputV2TickerPair,
+  ZodOutputV2TickerCurrency,
+])
+export type OutputV2Ticker = z.output<typeof ZodOutputV2Ticker>
+
+// v2Tickers
+export const ZodInputV2Tickers = z.object({
+  symbols: z.union([
+    z.array(z.string().trim()).min(1).transform(symbols => symbols.join(',')),
+    z.string().trim(),
+  ]).default('ALL'),
+})
+export type InputV2Tickers = z.input<typeof ZodInputV2Tickers>
+export const ZodOutputV2Tickers = z.array(ZodOutputV2Ticker)
 export type OutputV2Tickers = z.output<typeof ZodOutputV2Tickers>
+
+// v2TickersHist
+export const ZodInputV2TickersHist = z.object({
+  symbols: z.union([
+    z.array(z.string().trim()).min(1).transform(symbols => symbols.join(',')),
+    z.string().trim(),
+  ]).default('ALL'),
+  start: z.date().transform(transformMts).optional(),
+  end: z.date().transform(transformMts).optional(),
+  limit: z.number().int().max(250).default(100),
+})
+export type InputV2TickersHist = z.input<typeof ZodInputV2TickersHist>
+export const ZodOutputV2TickersHist = z.array(z.tuple([
+  z.string().trim().regex(/^[\w:]+$/), // SYMBOL: The symbol of the requested ticker history data
+  z.number(), // BID: Price of last highest bid
+  z.unknown(),
+  z.number(), // ASK: Price of last lowest ask
+  z.unknown(),
+  z.unknown(),
+  z.unknown(),
+  z.unknown(),
+  z.unknown(),
+  z.unknown(),
+  z.unknown(),
+  z.unknown(),
+  z.number().int(), // MTS: Millisecond epoch timestamp
+])).transform(tickers => tickers.map(([symbol, bidPrice,, askPrice,,,,,,,,, mts]) => ({
+  symbol,
+  ...(symbol[0] === 't' ? { pair: symbol.slice(1) } : {}),
+  bidPrice,
+  askPrice,
+  mts: new Date(mts),
+})))
+export type OutputV2TickersHist = z.output<typeof ZodOutputV2TickersHist>
 
 // v2AuthWriteFundingAuto
 const ZodInputV2AuthWriteFundingAutoDeactivate = z.object({
