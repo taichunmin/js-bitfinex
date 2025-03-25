@@ -36,42 +36,51 @@ export const ZodOutputV2PlatformStatus = z.tuple([
 ]).transform(([status]) => ({ status }))
 export type OutputV2PlatformStatus = z.output<typeof ZodOutputV2PlatformStatus>
 
-// v2TradesTradingHist
-export const ZodInputV2TradesTradingHist = z.object({
-  pair: z.string().toUpperCase().default('BTCUSD'),
+// v2TradesHist
+const ZodInputV2TradesHistBase = z.object({
   limit: z.number().int().max(10000).default(125),
   sort: ZodBitfinexSort.default(enums.BitfinexSort.DESC),
   start: z.date().transform(transformMts).optional(),
   end: z.date().transform(transformMts).optional(),
 })
-export type InputV2TradesTradingHist = z.input<typeof ZodInputV2TradesTradingHist>
-
-export const ZodOutputV2TradesTradingHist = z.array(z.tuple([
+export const ZodInputV2TradesHistPair = ZodInputV2TradesHistBase.extend({
+  pair: z.string().trim().regex(/^[\w:]+$/).toUpperCase(),
+}).transform(obj => ({ ...obj, symbol: `t${obj.pair}` }))
+export type InputV2TradesHistPair = z.input<typeof ZodInputV2TradesHistPair>
+export const ZodInputV2TradesHistCurrency = ZodInputV2TradesHistBase.extend({
+  currency: z.string().trim().regex(/^[\w:]+$/).toUpperCase(),
+}).transform(obj => ({ ...obj, symbol: `f${obj.currency}` }))
+export type InputV2TradesHistCurrency = z.input<typeof ZodInputV2TradesHistCurrency>
+export const ZodInputV2TradesHistSymbol = ZodInputV2TradesHistBase.extend({
+  symbol: z.string().trim().regex(/^[\w:]+$/),
+})
+export type InputV2TradesHistSymbol = z.input<typeof ZodInputV2TradesHistSymbol>
+export const ZodInputV2TradesHist = z.union([
+  ZodInputV2TradesHistPair,
+  ZodInputV2TradesHistCurrency,
+  ZodInputV2TradesHistSymbol,
+])
+export type InputV2TradesHist = z.input<typeof ZodInputV2TradesHist>
+export const ZodOutputV2TradesHistPair = z.array(z.tuple([
   z.number().int(), // ID of the trade
   z.number().int(), // Millisecond epoch timestamp
   z.number(), // How much was bought (positive) or sold (negative)
   z.number(), // Price at which the trade was executed
 ]).transform(([id, mts, amount, price]) => ({ id, mts: new Date(mts), amount, price })))
-export type OutputV2TradesTradingHist = z.output<typeof ZodOutputV2TradesTradingHist>
-
-// v2TradesFundingHist
-export const ZodInputV2TradesFundingHist = z.object({
-  currency: z.string().trim().regex(/^[\w:]+$/).toUpperCase().default('USD'),
-  limit: z.number().int().max(10000).default(125),
-  sort: ZodBitfinexSort.default(enums.BitfinexSort.DESC),
-  start: z.date().transform(transformMts).optional(),
-  end: z.date().transform(transformMts).optional(),
-})
-export type InputV2TradesFundingHist = z.input<typeof ZodInputV2TradesFundingHist>
-
-export const ZodOutputV2TradesFundingHist = z.array(z.tuple([
+export type OutputV2TradesHistPair = z.output<typeof ZodOutputV2TradesHistPair>
+export const ZodOutputV2TradesHistCurrency = z.array(z.tuple([
   z.number().int(), // ID of the trade
   z.number().int(), // Millisecond epoch timestamp
   z.number(), // How much was bought (positive) or sold (negative)
   z.number(), // Rate at which funding transaction occurred
   z.number().int(), // Amount of time the funding transaction was for
 ]).transform(([id, mts, amount, rate, period]) => ({ id, mts: new Date(mts), amount, rate, period })))
-export type OutputV2TradesFundingHist = z.output<typeof ZodOutputV2TradesFundingHist>
+export type OutputV2TradesHistCurrency = z.output<typeof ZodOutputV2TradesHistCurrency>
+export const ZodOutputV2TradesHist = z.union([
+  ZodOutputV2TradesHistPair,
+  ZodOutputV2TradesHistCurrency,
+])
+export type OutputV2TradesHist = z.output<typeof ZodOutputV2TradesHist>
 
 // v2AuthReadPermissions
 /** @inline */
@@ -609,3 +618,106 @@ export const ZodOutputV2IntGeoIp = z.tuple([
   ZodOutputV2IntGeoIpGeo,
 ]).transform(([ip, geoip]) => ({ ip, ...geoip }))
 export type OutputV2IntGeoIp = z.output<typeof ZodOutputV2IntGeoIp>
+
+// v2AuthReadInfoUser ZodOutputV2AuthReadInfoUser
+export const ZodOutputV2AuthReadInfoUser = z.tuple([
+  z.number().int(), // ID: Account ID
+  z.string(), // EMAIL: Account Email
+  z.string(), // USERNAME: Account Username
+  z.number().int(), // MTS_ACCOUNT_CREATE: Millisecond timestamp of account creation
+  z.coerce.boolean(), // VERIFIED: Indicates if the user has a verified status (KYC) 1 = true, 0 = false
+  z.number().int(), // VERIFICATION_LEVEL: Account verification level
+  z.unknown(),
+  z.string(), // TIMEZONE: Account timezone setting
+  z.string().nullable(), // LOCALE: Account locale setting
+  z.string(), // COMPANY: Shows where the account is registered. Accounts registered at Bitfinex will show 'bitfinex' and accounts registered at eosfinex will show 'eosfinex'
+  z.coerce.boolean(), // EMAIL_VERIFIED: 1 if true
+  z.unknown(),
+  z.unknown(), // SUBACCOUNT_TYPE: TBD
+  z.unknown(),
+  z.number().int().nullable(), // MTS_MASTER_ACCOUNT_CREATE: Millisecond timestamp of master account creation
+  z.number().int().nullable(), // GROUP_ID: Account group ID
+  z.number().int().nullable(), // MASTER_ACCOUNT_ID: The ID of the master account, If the account is a sub-account.
+  z.coerce.boolean(), // INHERIT_MASTER_ACCOUNT_VERIFICATION: 1 if account inherits verification from master account
+  z.coerce.boolean(), // IS_GROUP_MASTER: 1 if account is a master account
+  z.coerce.boolean(), // GROUP_WITHDRAW_ENABLED: 1 if enabled
+  z.unknown(),
+  z.coerce.boolean(), // PPT_ENABLED: 1 if true (for paper trading accounts)
+  z.coerce.boolean(), // MERCHANT_ENABLED: 1 if true (for merchant accounts)
+  z.coerce.boolean(), // COMPETITION_ENABLED: 1 if true (for competition accounts)
+  z.unknown(),
+  z.unknown(),
+  z.array(z.string()), // 2FA_MODES: Array of enabled 2FA modes ('u2f', 'otp')
+  z.unknown(),
+  z.coerce.boolean(), // IS_SECURITIES_MASTER: 1 if true (when the account has a securities sub-account)
+  z.coerce.boolean(), // SECURITIES_ENABLED: 1 if true (for securities accounts)
+  z.coerce.boolean(), // IS_SECURITIES_INVESTOR_ACCREDITED: 1 if true (when an account is accredited investor verified)
+  z.coerce.boolean(), // IS_SECURITIES_EL_SALVADOR: 1 if true (if an account is verified for El Salvador securities)
+  z.unknown(),
+  z.unknown(),
+  z.unknown(),
+  z.unknown(),
+  z.unknown(),
+  z.unknown(),
+  z.coerce.boolean(), // ALLOW_DISABLE_CTXSWITCH: Account can disable context switching by master account into this account (1 if true)
+  z.coerce.boolean(), // CTXSWITCH_DISABLED: Master account cannot context switch into this account (1 if true)
+  z.unknown(),
+  z.unknown(),
+  z.unknown(),
+  z.unknown(),
+  z.coerce.date().nullable(), // TIME_LAST_LOGIN: Date and time of last login
+  z.unknown(),
+  z.unknown(),
+  z.number().int(), // VERIFICATION_LEVEL_SUBMITTED: Level of highest verification application submitted from the account
+  z.unknown(),
+  z.array(z.string()), // COMP_COUNTRIES: Array of country codes based on your verification data (residence and nationality)
+  z.array(z.string()), // COMP_COUNTRIES_RESID: Array of country codes based on your verification data (residence only)
+  z.string(), // COMPL_ACCOUNT_TYPE: Type of compliance verification ("individual" or "corporate")
+  z.unknown(),
+  z.unknown(),
+  z.coerce.boolean(), // IS_MERCHANT_ENTERPRISE: 1 if true (when account is enterprise merchant)
+]).transform(([id, email, username, mtsAccountCreate, verified, verificationLevel,, timezone, locale, company, emailVerified,,,, mtsMasterAccountCreate, groupId, masterAccountId, inheritMasterAccountVerification, isGroupMaster, groupWithdrawEnabled,, pptEnabled, merchantEnabled, competitionEnabled,,, modes2FA,, isSecuritiesMaster, securitiesEnabled, isSecuritiesInvestorAccredited, isSecuritiesElSalvador,,,,,,, allowDisableCtxSwitch, ctxSwitchDisabled,,,,, timeLastLogin,,, verificationLevelSubmitted,, compCountries, compCountriesResid, complAccountType,,, isMerchantEnterprise]) => ({
+  company,
+  compCountries,
+  compCountriesResid,
+  competitionEnabled,
+  complAccountType,
+  email,
+  id,
+  locale,
+  modes2FA,
+  mtsAccountCreate: new Date(mtsAccountCreate),
+  pptEnabled,
+  timeLastLogin,
+  timezone,
+  username,
+  ctxSwitch: {
+    allowDisable: allowDisableCtxSwitch,
+    disabled: ctxSwitchDisabled,
+  },
+  masterAccount: {
+    groupId,
+    groupWithdrawEnabled,
+    id: masterAccountId,
+    inheritVerification: inheritMasterAccountVerification,
+    isGroupMaster,
+    mtsCreate: mtsMasterAccountCreate ? new Date(mtsMasterAccountCreate) : null,
+  },
+  merchant: {
+    enabled: merchantEnabled,
+    isEnterprise: isMerchantEnterprise,
+  },
+  securities: {
+    enabled: securitiesEnabled,
+    isElSalvador: isSecuritiesElSalvador,
+    isInvestorAccredited: isSecuritiesInvestorAccredited,
+    isMaster: isSecuritiesMaster,
+  },
+  verification: {
+    email: emailVerified,
+    level: verificationLevel,
+    levelSubmitted: verificationLevelSubmitted,
+    verified,
+  },
+}))
+export type OutputV2AuthReadInfoUser = z.output<typeof ZodOutputV2AuthReadInfoUser>

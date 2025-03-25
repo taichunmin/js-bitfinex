@@ -7,7 +7,7 @@
   "main": "dist/bitfinex.js",
   "module": "dist/bitfinex.mjs",
   "name": "@taichunmin/bitfinex",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "author": {
     "email": "taichunmin@gmail.com",
     "name": "Chunmin Tai",
@@ -18,7 +18,7 @@
   },
   "devDependencies": {
     "@types/lodash": "^4.17.16",
-    "@types/node": "^22.13.10",
+    "@types/node": "^22.13.13",
     "@typescript-eslint/eslint-plugin": "^7",
     "dayjs": "^1.11.13",
     "dotenv": "^16.4.7",
@@ -29,15 +29,15 @@
     "eslint-plugin-promise": "^7.2.1",
     "eslint-plugin-tsdoc": "^0.4.0",
     "jest": "^29.7.0",
-    "ts-jest": "^29.2.6",
+    "ts-jest": "^29.3.0",
     "tsup": "^8.4.0",
     "tsx": "^4.19.3",
-    "type-fest": "^4.37.0",
-    "typedoc": "^0.28.0",
+    "type-fest": "^4.38.0",
+    "typedoc": "^0.28.1",
     "typedoc-plugin-ga": "^1.0.5",
     "typedoc-plugin-mdn-links": "^5.0.1",
     "typescript": "^5.8.2",
-    "typescript-eslint": "^8.26.1"
+    "typescript-eslint": "^8.28.0"
   },
   "exports": {
     "./package.json": "./package.json",
@@ -59,7 +59,7 @@
     "url": "git+https://github.com/taichunmin/js-bitfinex.git"
   },
   "dependencies": {
-    "axios": "^1.8.3",
+    "axios": "^1.8.4",
     "lodash": "^4.17.21",
     "zod": "^3.24.2"
   },

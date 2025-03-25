@@ -112,236 +112,6 @@ export class Bitfinex {
     }
   }
 
-  static async v2Config (): Promise<Record<enums.V2ConfigRequest, zod.JsonValue[]>>
-  static async v2Config (req: enums.V2ConfigRequest): Promise<zod.JsonValue[]>
-  static async v2Config <TReq extends enums.V2ConfigRequest> (reqs: TReq[]): Promise<Record<TReq, zod.JsonValue[]>>
-
-  /**
-   * 取得指定的 Bifinex 設定檔。
-   * @group v2
-   * @param reqOrReqs - 設定檔的名稱，如果帶入陣列可以一次取得多個設定檔。
-   * @returns Bifinex 設定檔的內容。
-   * @see [Configs | BitFinex API](https://docs.bitfinex.com/reference/rest-public-conf)
-   */
-  static async v2Config (reqOrReqs?: any): Promise<any> {
-    const trace: Record<string, any> = { reqs: reqOrReqs }
-    try {
-      const reqs = trace.reqs = zod.ZodInputV2Config.parse(_.isString(reqOrReqs) ? [reqOrReqs] : reqOrReqs) ?? V2ConfigRequestConst
-      trace.resp = await Bitfinex.#apiGetPub<zod.JsonValue[][]>({
-        path: `v2/conf/${reqs.join(',')}`,
-      })
-      return _.isString(reqOrReqs) ? _.first(trace.resp) : _.zipObject(reqs, trace.resp)
-    } catch (err) {
-      throw _.update(err, 'data.v2Config', old => old ?? trace)
-    }
-  }
-
-  /**
-   * 取得指定交易對的成交記錄。
-   * @group v2/trades
-   * @param opts - 參數說明
-   * - pair: 交易對代碼，預設為 `BTCUSD`
-   * - limit: 回傳的交易記錄數量上限，最大 `10000`，預設為 `125`
-   * - sort: 根據 `mts` 欄位將交易記錄以指定的方式進行排序，預設為 `BitfinexSort.DESC`
-   * - start: 回傳的交易記錄中，`mts` 欄位不小於此值
-   * - end: 回傳的交易記錄中，`mts` 欄位不大於此值
-   * @returns
-   * - id: 交易 ID
-   * - mts: 成交時間
-   * - amount: 成交數量，買入為正，賣出為負。
-   * - price: 成交價格
-   * @see [Trades | BitFinex API](https://docs.bitfinex.com/reference/rest-public-trades)
-   */
-  static async v2TradesTradingHist (opts: zod.InputV2TradesTradingHist = {}): Promise<zod.OutputV2TradesTradingHist> {
-    const trace: Record<string, any> = { opts }
-    try {
-      const opts1 = trace.opts = zod.ZodInputV2TradesTradingHist.parse(opts)
-      trace.resp = await Bitfinex.#apiGetPub({
-        path: `v2/trades/t${opts1.pair}/hist`,
-        query: _.pick(opts1, ['limit', 'sort', 'start', 'end']),
-      })
-      return zod.ZodOutputV2TradesTradingHist.parse(trace.resp)
-    } catch (err) {
-      throw _.update(err, 'data.v2TradesTradingHist', old => old ?? trace)
-    }
-  }
-
-  /**
-   * 取得指定貨幣的融資成交記錄。
-   * @group v2/trades
-   * @param opts - 參數說明
-   * - currency: 貨幣代碼，預設為 `USD`
-   * - limit: 回傳的交易記錄數量上限，最大 `10000`，預設為 `125`
-   * - sort: 根據 `mts` 欄位將交易記錄以指定的方式進行排序，預設為 `BitfinexSort.DESC`
-   * - start: 回傳的交易記錄中，`mts` 欄位不小於此值
-   * - end: 回傳的交易記錄中，`mts` 欄位不大於此值
-   * @returns
-   * - id: 交易 ID
-   * - mts: 成交時間
-   * - amount: 成交數量，買入為正，賣出為負。
-   * - rate: 融資成交利率
-   * - peroid: 融資天數
-   * @see [Trades | BitFinex API](https://docs.bitfinex.com/reference/rest-public-trades)
-   */
-  static async v2TradesFundingHist (opts: zod.InputV2TradesFundingHist = {}): Promise<zod.OutputV2TradesFundingHist> {
-    const trace: Record<string, any> = { opts }
-    try {
-      const opts1 = trace.opts = zod.ZodInputV2TradesFundingHist.parse(opts)
-      trace.resp = await Bitfinex.#apiGetPub({
-        path: `v2/trades/f${opts1.currency}/hist`,
-        query: _.pick(opts1, ['limit', 'sort', 'start', 'end']),
-      })
-      return zod.ZodOutputV2TradesFundingHist.parse(trace.resp)
-    } catch (err) {
-      throw _.update(err, 'data.v2TradesFundingHist', old => old ?? trace)
-    }
-  }
-
-  /**
-   * 取得 Bitfinex 所有交易對的詳細資訊。
-   * @group v1
-   * @returns
-   * - pair: 交易對代碼
-   * - price_precision: 價格小數點精確度
-   * - initial_margin: 初始保證金百分比
-   * - minimum_margin: 最低保證金百分比
-   * - maximum_order_size: 最大訂單量
-   * - minimum_order_size: 最小訂單量
-   * - expiration: 過期時間
-   * - margin: 保證金交易是否可用
-   */
-  static async v1SymbolsDetails (): Promise<zod.OutputV1SymbolsDetails> {
-    const trace: Record<string, any> = {}
-    try {
-      trace.resp = await Bitfinex.#apiGetPub({
-        path: 'https://api.bitfinex.com/v1/symbols_details',
-      })
-      return zod.ZodOutputV1SymbolsDetails.parse(trace.resp)
-    } catch (err) {
-      throw _.update(err, 'data.v1SymbolsDetails', old => old ?? trace)
-    }
-  }
-
-  /**
-   * 取得指定交易對 `pair` 的 K 線圖。
-   * @group v2/candles
-   * @param opts - 參數說明
-   * - timeframe: 時間框架，預設為 `1h`
-   * - pair: 交易對代碼，預設為 `BTCUSD`
-   * - section: `hist` 代表歷史記錄，`last` 代表最新資料，預設為 `hist`
-   * - limit: 資料筆數的上限，最大 `10000`
-   * - sort: 根據 `mts` 欄位將交易記錄以指定的方式進行排序，預設為 `BitfinexSort.DESC`
-   * - start: 回傳的交易記錄中，`mts` 欄位不小於此值
-   * - end: 回傳的交易記錄中，`mts` 欄位不大於此值
-   * @returns
-   * - mts: 成交時間
-   * - open: 開盤價
-   * - close: 收盤價
-   * - high: 最高價
-   * - low: 最低價
-   * - volume: 成交量
-   * @see [Candles | BitFinex API](https://docs.bitfinex.com/reference/rest-public-candles)
-   */
-  static async v2Candles (opts?: zod.z.input<typeof zod.ZodInputV2CandlesPair>): Promise<zod.OutputV2Candles>
-
-  /**
-   * 取得指定融資貨幣 `currency` 的 K 線圖。
-   * @group v2/candles
-   * @param opts - 參數說明
-   * - timeframe: 時間框架，預設為 `1h`
-   * - currency: 貨幣代碼，預設為 `USD`
-   * - period: 融資天數，預設為 2
-   * - section: `hist` 代表歷史記錄，`last` 代表最新資料，預設為 `hist`
-   * - limit: 資料筆數的上限，最大 `10000`
-   * - sort: 根據 `mts` 欄位將交易記錄以指定的方式進行排序，預設為 `BitfinexSort.DESC`
-   * - start: 回傳的交易記錄中，`mts` 欄位不小於此值
-   * - end: 回傳的交易記錄中，`mts` 欄位不大於此值
-   * @returns
-   * - mts: 成交時間
-   * - open: 開盤利率
-   * - close: 收盤利率
-   * - high: 最高利率
-   * - low: 最低利率
-   * - volume: 成交量
-   * @see [Candles | BitFinex API](https://docs.bitfinex.com/reference/rest-public-candles)
-   */
-  static async v2Candles (opts?: zod.z.input<typeof zod.ZodInputV2CandlesCurrencyPeriod1>): Promise<zod.OutputV2Candles>
-
-  /**
-   * 取得指定融資貨幣 `currency` 的 K 線圖。
-   * @group v2/candles
-   * @param opts - 參數說明
-   * - timeframe: 時間框架，預設為 `1h`
-   * - currency: 貨幣代碼，預設為 `USD`
-   * - periodStart: 融資天數的開始範圍
-   * - periodEnd: 融資天數的結束範圍
-   * - aggregation: 資料聚合的方式，可指定 `10` 或 `30`，預設為 `30`
-   * - section: `hist` 代表歷史記錄，`last` 代表最新資料，預設為 `hist`
-   * - limit: 資料筆數的上限，最大 `10000`
-   * - sort: 根據 `mts` 欄位將交易記錄以指定的方式進行排序，預設為 `BitfinexSort.DESC`
-   * - start: 回傳的交易記錄中，`mts` 欄位不小於此值
-   * - end: 回傳的交易記錄中，`mts` 欄位不大於此值
-   * @returns
-   * - mts: 成交時間
-   * - open: 開盤利率
-   * - close: 收盤利率
-   * - high: 最高利率
-   * - low: 最低利率
-   * - volume: 成交量
-   * @see [Candles | BitFinex API](https://docs.bitfinex.com/reference/rest-public-candles)
-   */
-  static async v2Candles (opts?: zod.z.input<typeof zod.ZodInputV2CandlesCurrencyPeriod2>): Promise<zod.OutputV2Candles>
-
-  static async v2Candles (opts: any = {}): Promise<zod.OutputV2Candles> {
-    const trace: Record<string, any> = { opts }
-    try {
-      const opts1 = trace.opts = zod.ZodInputV2Candles.parse(opts) as zod.z.output<typeof zod.ZodInputV2Candles> & Record<string, undefined>
-      if (_.isString(opts1.pair)) trace.candle = `trade:${opts1.timeframe}:t${opts1.pair}`
-      else if (_.isString(opts1.currency)) trace.candle = `trade:${opts1.timeframe}:f${opts1.currency}:${opts1.period}`
-      if (!_.isString(trace.candle)) throw new Error('invalid pair or currency')
-      trace.resp = await Bitfinex.#apiGetPub({
-        path: `v2/candles/${trace.candle}/${opts1.section}`,
-        query: _.omitBy<any>(_.pick(opts1, ['sort', 'start', 'end', 'limit']), _.isNil),
-      })
-      return zod.ZodOutputV2Candles.parse(trace.resp)
-    } catch (err) {
-      throw _.update(err, 'data.v2Candles', old => old ?? trace)
-    }
-  }
-
-  /**
-   * 取得指定貨幣最近的融資統計記錄
-   * @group v2/funding
-   * @param opts - 參數說明
-   * - currency: 貨幣代碼，預設為 `USD`
-   * - limit: 回傳的融資統計記錄數量上限，最大 `250`
-   * - start: 回傳的融資統計記錄中，`mts` 欄位不小於此值
-   * - end: 回傳的融資統計記錄中，`mts` 欄位不大於此值
-   * @returns
-   * - mts: 融資統計記錄的產生時間
-   * - frrDiv365: [Flash Return Rate](https://support.bitfinex.com/hc/en-us/articles/213919009-What-is-the-Bitfinex-Funding-Flash-Return-Rate) 除以 365
-   * - frr: [Flash Return Rate](https://support.bitfinex.com/hc/en-us/articles/213919009-What-is-the-Bitfinex-Funding-Flash-Return-Rate)
-   * - apr: 年利率 Annual Percentage Rate，由公式 `frr * 365` 計算產生
-   * - avgPeriod: 平均融資天數
-   * - amount: 融資貨幣總數量
-   * - amountUsed: 已使用的融資貨幣數量
-   * - belowThreshold: 低於 `0.75%` 的融資貨幣掛單數量
-   * @see [Funding Funding Statistics | BitFinex API](https://docs.bitfinex.com/reference/rest-public-funding-stats)
-   */
-  static async v2FundingStatsHist (opts: zod.InputV2FundingStatsHist = {}): Promise<zod.OutputV2FundingStatsHist> {
-    const trace: Record<string, any> = { opts }
-    try {
-      const opts1 = trace.opts = zod.ZodInputV2FundingStatsHist.parse(opts)
-      trace.resp = await Bitfinex.#apiGetPub({
-        path: `v2/funding/stats/f${opts1.currency}/hist`,
-        query: _.pick(opts1, ['limit', 'start', 'end']),
-      })
-      return zod.ZodOutputV2FundingStatsHist.parse(trace.resp)
-    } catch (err) {
-      throw _.update(err, 'data.v2FundingStatsHist', old => old ?? trace)
-    }
-  }
-
   /**
    * 取得指定交易對目前的行情概覽。它會回傳當前最佳買入價和賣出價、最近成交價，以及昨日至今的每日成交量和價格變動資訊。
    * @group v2
@@ -360,6 +130,7 @@ export class Bitfinex {
    * - volume: 昨日至今的成交量
    * - high: 昨日至今的最高價
    * - low: 昨日至今的最低價
+   * @see [Ticker | BitFinex API](https://docs.bitfinex.com/reference/rest-public-ticker)
    */
   static async v2Ticker (opts: zod.InputV2TickerPair): Promise<zod.OutputV2TickerPair>
 
@@ -367,10 +138,10 @@ export class Bitfinex {
    * 取得指定融資貨幣目前的行情概覽。它會回傳當前最佳買入價和賣出價、最近成交價，以及昨日至今的每日成交量和價格變動資訊。
    * @group v2
    * @param opts - 參數說明
-   * - currency: 貨幣代碼
+   * - currency: 融資代碼
    * @returns
    * - symbol: 融資貨幣
-   * - currency: 貨幣代碼
+   * - currency: 融資代碼
    * - frr: [Flash Return Rate](https://support.bitfinex.com/hc/en-us/articles/213919009-What-is-the-Bitfinex-Funding-Flash-Return-Rate)
    * - dpr: Daily Percentage Rate，由公式 `frr * 100` 計算產生
    * - apr: Annual Percentage Rate，由公式 `frr * 100 * 365` 計算產生
@@ -387,6 +158,7 @@ export class Bitfinex {
    * - high: 昨日至今的最高利率
    * - low: 昨日至今的最低利率
    * - frrAmountAvailable: 以 FRR 進行貸款或放款的數量
+   * @see [Ticker | BitFinex API](https://docs.bitfinex.com/reference/rest-public-ticker)
    */
   static async v2Ticker (opts: zod.InputV2TickerCurrency): Promise<zod.OutputV2TickerCurrency>
 
@@ -410,8 +182,8 @@ export class Bitfinex {
    *     - high: 昨日至今的最高價
    *     - low: 昨日至今的最低價
    * - 融資的行情概覽欄位
-   *     - symbol: 貨幣代碼
-   *     - currency: 貨幣代碼
+   *     - symbol: 融資代碼
+   *     - currency: 融資代碼
    *     - frr: [Flash Return Rate](https://support.bitfinex.com/hc/en-us/articles/213919009-What-is-the-Bitfinex-Funding-Flash-Return-Rate)
    *     - dpr: Daily Percentage Rate，由公式 `frr * 100` 計算產生
    *     - apr: Annual Percentage Rate，由公式 `frr * 100 * 365` 計算產生
@@ -428,6 +200,7 @@ export class Bitfinex {
    *     - high: 昨日至今的最高利率
    *     - low: 昨日至今的最低利率
    *     - frrAmountAvailable: 以 FRR 進行貸款或放款的數量
+   * @see [Ticker | BitFinex API](https://docs.bitfinex.com/reference/rest-public-ticker)
    */
   static async v2Ticker (opts: zod.InputV2TickerSymbol): Promise<zod.OutputV2TickerPair | zod.OutputV2TickerCurrency>
 
@@ -464,8 +237,8 @@ export class Bitfinex {
    *     - high: 昨日至今的最高價
    *     - low: 昨日至今的最低價
    * - 融資的行情概覽欄位
-   *     - symbol: 貨幣代碼
-   *     - currency: 貨幣代碼
+   *     - symbol: 融資代碼
+   *     - currency: 融資代碼
    *     - frr: [Flash Return Rate](https://support.bitfinex.com/hc/en-us/articles/213919009-What-is-the-Bitfinex-Funding-Flash-Return-Rate)
    *     - dpr: Daily Percentage Rate，由公式 `frr * 100` 計算產生
    *     - apr: Annual Percentage Rate，由公式 `frr * 100 * 365` 計算產生
@@ -482,6 +255,7 @@ export class Bitfinex {
    *     - high: 昨日至今的最高利率
    *     - low: 昨日至今的最低利率
    *     - frrAmountAvailable: 以 FRR 進行貸款或放款的數量
+   * @see [Tickers | BitFinex API](https://docs.bitfinex.com/reference/rest-public-tickers)
    */
   static async v2Tickers (opts: zod.InputV2Tickers = {}): Promise<zod.OutputV2Tickers> {
     const trace: Record<string, any> = { opts }
@@ -511,6 +285,7 @@ export class Bitfinex {
    * - bidPrice: 最高的買入價
    * - askPrice: 最低的賣出價
    * - mts: 記錄的時間
+   * @see [Tickers History | BitFinex API](https://docs.bitfinex.com/reference/rest-public-tickers-history)
    */
   static async v2TickersHist (opts: zod.InputV2TickersHist = {}): Promise<zod.OutputV2TickersHist> {
     const trace: Record<string, any> = { opts }
@@ -523,6 +298,251 @@ export class Bitfinex {
       return zod.ZodOutputV2TickersHist.parse(trace.resp)
     } catch (err) {
       throw _.update(err, 'data.v2TickersHist', old => old ?? trace)
+    }
+  }
+
+  /**
+   * 取得指定交易對的成交記錄。
+   * @group v2/trades
+   * @param opts - 參數說明
+   * - pair: 交易對代碼
+   * - limit: 回傳的交易記錄數量上限，最大 `10000`，預設為 `125`
+   * - sort: 根據 `mts` 欄位將交易記錄以指定的方式進行排序，預設為 `BitfinexSort.DESC`
+   * - start: 回傳的交易記錄中，`mts` 欄位不小於此值
+   * - end: 回傳的交易記錄中，`mts` 欄位不大於此值
+   * @returns
+   * - id: 交易 ID
+   * - mts: 成交時間
+   * - amount: 成交數量，買入為正，賣出為負。
+   * - price: 成交價格
+   * @see [Trades | BitFinex API](https://docs.bitfinex.com/reference/rest-public-trades)
+   */
+  static async v2TradesHist (opts: zod.InputV2TradesHistPair): Promise<zod.OutputV2TradesHistPair>
+
+  /**
+   * 取得指定融資的成交記錄。
+   * @group v2/trades
+   * @param opts - 參數說明
+   * - currency: 融資代碼
+   * - limit: 回傳的交易記錄數量上限，最大 `10000`，預設為 `125`
+   * - sort: 根據 `mts` 欄位將交易記錄以指定的方式進行排序，預設為 `BitfinexSort.DESC`
+   * - start: 回傳的交易記錄中，`mts` 欄位不小於此值
+   * - end: 回傳的交易記錄中，`mts` 欄位不大於此值
+   * @returns
+   * - id: 交易 ID
+   * - mts: 成交時間
+   * - amount: 成交數量，買入為正，賣出為負。
+   * - rate: 融資成交利率
+   * - peroid: 融資天數
+   * @see [Trades | BitFinex API](https://docs.bitfinex.com/reference/rest-public-trades)
+   */
+  static async v2TradesHist (opts: zod.InputV2TradesHistCurrency): Promise<zod.OutputV2TradesHistCurrency>
+
+  /**
+   * 取得指定交易對或融資的成交記錄。
+   * @group v2/trades
+   * @param opts - 參數說明
+   * - symbol: 交易對或融資代碼
+   * - limit: 回傳的交易記錄數量上限，最大 `10000`，預設為 `125`
+   * - sort: 根據 `mts` 欄位將交易記錄以指定的方式進行排序，預設為 `BitfinexSort.DESC`
+   * - start: 回傳的交易記錄中，`mts` 欄位不小於此值
+   * - end: 回傳的交易記錄中，`mts` 欄位不大於此值
+   * @returns
+   * - 如果 symbol 是交易對代碼時：
+   *     - id: 交易 ID
+   *     - mts: 成交時間
+   *     - amount: 成交數量，買入為正，賣出為負。
+   *     - price: 成交價格
+   * - 如果 symbol 是融資代碼時：
+   *     - id: 交易 ID
+   *     - mts: 成交時間
+   *     - amount: 成交數量，買入為正，賣出為負。
+   *     - rate: 融資成交利率
+   *     - peroid: 融資天數
+   * @see [Trades | BitFinex API](https://docs.bitfinex.com/reference/rest-public-trades)
+   */
+  static async v2TradesHist (opts: zod.InputV2TradesHistSymbol): Promise<zod.OutputV2TradesHistPair | zod.OutputV2TradesHistCurrency>
+
+  static async v2TradesHist (opts: zod.InputV2TradesHist): Promise<zod.OutputV2TradesHist> {
+    const trace: Record<string, any> = { opts }
+    try {
+      const opts1 = trace.opts = zod.ZodInputV2TradesHist.parse(opts)
+      trace.resp = await Bitfinex.#apiGetPub({
+        path: `v2/trades/${opts1.symbol}/hist`,
+        query: _.pick(opts1, ['limit', 'sort', 'start', 'end']),
+      })
+      return zod.ZodOutputV2TradesHist.parse(trace.resp)
+    } catch (err) {
+      throw _.update(err, 'data.v2TradesHist', old => old ?? trace)
+    }
+  }
+
+  /**
+   * 取得指定交易對 `pair` 的 K 線圖。
+   * @group v2/candles
+   * @param opts - 參數說明
+   * - timeframe: 時間框架，預設為 `1h`
+   * - pair: 交易對代碼，預設為 `BTCUSD`
+   * - section: `hist` 代表歷史記錄，`last` 代表最新資料，預設為 `hist`
+   * - limit: 資料筆數的上限，最大 `10000`
+   * - sort: 根據 `mts` 欄位將交易記錄以指定的方式進行排序，預設為 `BitfinexSort.DESC`
+   * - start: 回傳的交易記錄中，`mts` 欄位不小於此值
+   * - end: 回傳的交易記錄中，`mts` 欄位不大於此值
+   * @returns
+   * - mts: 成交時間
+   * - open: 開盤價
+   * - close: 收盤價
+   * - high: 最高價
+   * - low: 最低價
+   * - volume: 成交量
+   * @see [Candles | BitFinex API](https://docs.bitfinex.com/reference/rest-public-candles)
+   */
+  static async v2Candles (opts?: zod.z.input<typeof zod.ZodInputV2CandlesPair>): Promise<zod.OutputV2Candles>
+
+  /**
+   * 取得指定融資貨幣 `currency` 的 K 線圖。
+   * @group v2/candles
+   * @param opts - 參數說明
+   * - timeframe: 時間框架，預設為 `1h`
+   * - currency: 融資代碼，預設為 `USD`
+   * - period: 融資天數，預設為 2
+   * - section: `hist` 代表歷史記錄，`last` 代表最新資料，預設為 `hist`
+   * - limit: 資料筆數的上限，最大 `10000`
+   * - sort: 根據 `mts` 欄位將交易記錄以指定的方式進行排序，預設為 `BitfinexSort.DESC`
+   * - start: 回傳的交易記錄中，`mts` 欄位不小於此值
+   * - end: 回傳的交易記錄中，`mts` 欄位不大於此值
+   * @returns
+   * - mts: 成交時間
+   * - open: 開盤利率
+   * - close: 收盤利率
+   * - high: 最高利率
+   * - low: 最低利率
+   * - volume: 成交量
+   * @see [Candles | BitFinex API](https://docs.bitfinex.com/reference/rest-public-candles)
+   */
+  static async v2Candles (opts?: zod.z.input<typeof zod.ZodInputV2CandlesCurrencyPeriod1>): Promise<zod.OutputV2Candles>
+
+  /**
+   * 取得指定融資貨幣 `currency` 的 K 線圖。
+   * @group v2/candles
+   * @param opts - 參數說明
+   * - timeframe: 時間框架，預設為 `1h`
+   * - currency: 融資代碼，預設為 `USD`
+   * - periodStart: 融資天數的開始範圍
+   * - periodEnd: 融資天數的結束範圍
+   * - aggregation: 資料聚合的方式，可指定 `10` 或 `30`，預設為 `30`
+   * - section: `hist` 代表歷史記錄，`last` 代表最新資料，預設為 `hist`
+   * - limit: 資料筆數的上限，最大 `10000`
+   * - sort: 根據 `mts` 欄位將交易記錄以指定的方式進行排序，預設為 `BitfinexSort.DESC`
+   * - start: 回傳的交易記錄中，`mts` 欄位不小於此值
+   * - end: 回傳的交易記錄中，`mts` 欄位不大於此值
+   * @returns
+   * - mts: 成交時間
+   * - open: 開盤利率
+   * - close: 收盤利率
+   * - high: 最高利率
+   * - low: 最低利率
+   * - volume: 成交量
+   * @see [Candles | BitFinex API](https://docs.bitfinex.com/reference/rest-public-candles)
+   */
+  static async v2Candles (opts?: zod.z.input<typeof zod.ZodInputV2CandlesCurrencyPeriod2>): Promise<zod.OutputV2Candles>
+
+  static async v2Candles (opts: any = {}): Promise<zod.OutputV2Candles> {
+    const trace: Record<string, any> = { opts }
+    try {
+      const opts1 = trace.opts = zod.ZodInputV2Candles.parse(opts) as zod.z.output<typeof zod.ZodInputV2Candles> & Record<string, undefined>
+      if (_.isString(opts1.pair)) trace.candle = `trade:${opts1.timeframe}:t${opts1.pair}`
+      else if (_.isString(opts1.currency)) trace.candle = `trade:${opts1.timeframe}:f${opts1.currency}:${opts1.period}`
+      if (!_.isString(trace.candle)) throw new Error('invalid pair or currency')
+      trace.resp = await Bitfinex.#apiGetPub({
+        path: `v2/candles/${trace.candle}/${opts1.section}`,
+        query: _.omitBy<any>(_.pick(opts1, ['sort', 'start', 'end', 'limit']), _.isNil),
+      })
+      return zod.ZodOutputV2Candles.parse(trace.resp)
+    } catch (err) {
+      throw _.update(err, 'data.v2Candles', old => old ?? trace)
+    }
+  }
+
+  static async v2Config (): Promise<Record<enums.V2ConfigRequest, zod.JsonValue[]>>
+  static async v2Config (req: enums.V2ConfigRequest): Promise<zod.JsonValue[]>
+  static async v2Config <TReq extends enums.V2ConfigRequest> (reqs: TReq[]): Promise<Record<TReq, zod.JsonValue[]>>
+
+  /**
+   * 取得指定的 Bifinex 設定檔。
+   * @group v2
+   * @param reqOrReqs - 設定檔的名稱，如果帶入陣列可以一次取得多個設定檔。
+   * @returns Bifinex 設定檔的內容。
+   * @see [Configs | BitFinex API](https://docs.bitfinex.com/reference/rest-public-conf)
+   */
+  static async v2Config (reqOrReqs?: any): Promise<any> {
+    const trace: Record<string, any> = { reqs: reqOrReqs }
+    try {
+      const reqs = trace.reqs = zod.ZodInputV2Config.parse(_.isString(reqOrReqs) ? [reqOrReqs] : reqOrReqs) ?? V2ConfigRequestConst
+      trace.resp = await Bitfinex.#apiGetPub<zod.JsonValue[][]>({
+        path: `v2/conf/${reqs.join(',')}`,
+      })
+      return _.isString(reqOrReqs) ? _.first(trace.resp) : _.zipObject(reqs, trace.resp)
+    } catch (err) {
+      throw _.update(err, 'data.v2Config', old => old ?? trace)
+    }
+  }
+
+  /**
+   * 取得 Bitfinex 所有交易對的詳細資訊。
+   * @group v1
+   * @returns
+   * - pair: 交易對代碼
+   * - price_precision: 價格小數點精確度
+   * - initial_margin: 初始保證金百分比
+   * - minimum_margin: 最低保證金百分比
+   * - maximum_order_size: 最大訂單量
+   * - minimum_order_size: 最小訂單量
+   * - expiration: 過期時間
+   * - margin: 保證金交易是否可用
+   */
+  static async v1SymbolsDetails (): Promise<zod.OutputV1SymbolsDetails> {
+    const trace: Record<string, any> = {}
+    try {
+      trace.resp = await Bitfinex.#apiGetPub({
+        path: 'https://api.bitfinex.com/v1/symbols_details',
+      })
+      return zod.ZodOutputV1SymbolsDetails.parse(trace.resp)
+    } catch (err) {
+      throw _.update(err, 'data.v1SymbolsDetails', old => old ?? trace)
+    }
+  }
+
+  /**
+   * 取得指定貨幣最近的融資統計記錄
+   * @group v2/funding
+   * @param opts - 參數說明
+   * - currency: 融資代碼，預設為 `USD`
+   * - limit: 回傳的融資統計記錄數量上限，最大 `250`
+   * - start: 回傳的融資統計記錄中，`mts` 欄位不小於此值
+   * - end: 回傳的融資統計記錄中，`mts` 欄位不大於此值
+   * @returns
+   * - mts: 融資統計記錄的產生時間
+   * - frrDiv365: [Flash Return Rate](https://support.bitfinex.com/hc/en-us/articles/213919009-What-is-the-Bitfinex-Funding-Flash-Return-Rate) 除以 365
+   * - frr: [Flash Return Rate](https://support.bitfinex.com/hc/en-us/articles/213919009-What-is-the-Bitfinex-Funding-Flash-Return-Rate)
+   * - apr: 年利率 Annual Percentage Rate，由公式 `frr * 365` 計算產生
+   * - avgPeriod: 平均融資天數
+   * - amount: 融資貨幣總數量
+   * - amountUsed: 已使用的融資貨幣數量
+   * - belowThreshold: 低於 `0.75%` 的融資貨幣掛單數量
+   * @see [Funding Funding Statistics | BitFinex API](https://docs.bitfinex.com/reference/rest-public-funding-stats)
+   */
+  static async v2FundingStatsHist (opts: zod.InputV2FundingStatsHist = {}): Promise<zod.OutputV2FundingStatsHist> {
+    const trace: Record<string, any> = { opts }
+    try {
+      const opts1 = trace.opts = zod.ZodInputV2FundingStatsHist.parse(opts)
+      trace.resp = await Bitfinex.#apiGetPub({
+        path: `v2/funding/stats/f${opts1.currency}/hist`,
+        query: _.pick(opts1, ['limit', 'start', 'end']),
+      })
+      return zod.ZodOutputV2FundingStatsHist.parse(trace.resp)
+    } catch (err) {
+      throw _.update(err, 'data.v2FundingStatsHist', old => old ?? trace)
     }
   }
 
@@ -612,7 +632,7 @@ export class Bitfinex {
    * @group v2/auth
    * @returns
    * - type: 錢包類型
-   * - currency: 貨幣代碼
+   * - currency: 融資代碼
    * - balance: 餘額
    * - unsettledInterest: 未結算的資金
    * - availableBalance: 可動用餘額
@@ -636,7 +656,7 @@ export class Bitfinex {
    * 取得目前出借中或是借入中的融資記錄。
    * @group v2/auth/funding
    * @param opts - 參數說明
-   * - currency: 貨幣代碼，如果未指定則回傳所有貨幣的融資記錄。
+   * - currency: 融資代碼，如果未指定則回傳所有貨幣的融資記錄。
    * @returns
    * - id: 融資記錄 ID
    * - symbol: 貨幣符號
@@ -676,9 +696,9 @@ export class Bitfinex {
    * 取得指定融資貨幣的自動借出設定
    * @group v2/auth/funding
    * @param opts - 參數說明
-   * - currency: 貨幣代碼
+   * - currency: 融資代碼
    * @returns
-   * - currency: 貨幣代碼
+   * - currency: 融資代碼
    * - period: 融資天數
    * - rate: 融資利率
    * - amount: 融資最大數量，`0` 代表無限制
@@ -704,7 +724,7 @@ export class Bitfinex {
    * @group v2/auth/funding
    * @param opts - 參數說明
    * - status: `1` 代表啟用、`0` 代表停用
-   * - currency: 貨幣代碼
+   * - currency: 融資代碼
    * - amount: 融資自動借出的數量，最小為 50 USD 或等值的融資貨幣，`0` 代表無上限
    * - period: 融資天數，預設為 `2`
    * - rate: 融資利率 (單位：百分比)，省略或 `0` 代表套用 FRR 浮動利率
@@ -712,13 +732,14 @@ export class Bitfinex {
    * - mts: 通知的時間
    * - type: 通知的類型，固定為 `fa-req`
    * - msgId: 訊息 ID
-   * - offer.currency: 貨幣代碼
+   * - offer.currency: 融資代碼
    * - offer.period: 融資天數
    * - offer.rate: 融資利率
    * - offer.threshold: 融資自動借出的數量，`0` 代表無上限
    * - code: W.I.P. (work in progress)
    * - status: 通知的狀態，這個欄位可能會因時而異，可能的值為 `SUCCESS`、`ERROR`、`FAILURE`…
    * - text: 通知的詳細內容
+   * @see [Funding Auto-renew | BitFinex API](https://docs.bitfinex.com/reference/rest-auth-funding-auto-renew)
    */
   async v2AuthWriteFundingAuto (opts: zod.InputV2AuthWriteFundingAuto): Promise<zod.OutputV2AuthWriteFundingAuto> {
     const trace: Record<string, any> = { opts }
@@ -738,7 +759,7 @@ export class Bitfinex {
    * 取得已掛單融資的交易記錄。可以用來查詢特定貨幣的融資交易記錄，或是一次取得所有貨幣的融資交易記錄。
    * @group v2/auth/funding
    * @param opts - 參數說明
-   * - currency: 貨幣代碼，如果未指定則回傳所有貨幣的融資記錄。
+   * - currency: 融資代碼，如果未指定則回傳所有貨幣的融資記錄。
    * - limit: 回傳的交易記錄數量上限。
    * - start: 回傳的交易記錄中，`mts` 欄位不小於此值
    * - end: 回傳的交易記錄中，`mts` 欄位不大於此值
@@ -771,13 +792,13 @@ export class Bitfinex {
    * 取得已結束的融資記錄。
    * @group v2/auth/funding
    * @param opts - 參數說明
-   * - currency: 貨幣代碼，如果未指定則回傳所有貨幣的融資記錄
+   * - currency: 融資代碼，如果未指定則回傳所有貨幣的融資記錄
    * - limit: 回傳的融資記錄數量上限，最大 `500`
    * - start: 回傳的融資記錄中，`mts` 欄位不小於此值
    * - end: 回傳的融資記錄中，`mts` 欄位不大於此值
    * @returns
    * - id: 融資記錄 ID
-   * - symbol: 貨幣代碼
+   * - symbol: 融資代碼
    * - side: 融資方向，`1` 代表為貸方，`0` 代表同時為貸方與借款人，`-1` 代表為借款人
    * - amount: 融資金額
    * - flags: 融資參數 (目前未定義)
@@ -815,14 +836,14 @@ export class Bitfinex {
    * 查看過去的分類帳記錄。預設會返回最近的記錄，但可以使用時間戳來檢索特定時間的數據，最長可以取得六年內的記錄。
    * @group v2/auth/ledgers
    * @param opts - 參數說明
-   * - currency: 貨幣代碼，如果未指定則回傳所有貨幣的分類帳記錄
+   * - currency: 融姿代碼，如果未指定則回傳所有貨幣的分類帳記錄
    * - category: 記錄類別，如果未指定則回傳所有類別的分類帳記錄
    * - limit: 回傳的分類帳記錄數量上限，最大 `2500`
    * - start: 回傳的分類帳記錄中，`mts` 欄位不小於此值
    * - end: 回傳的分類帳記錄中，`mts` 欄位不大於此值
    * @returns
    * - id: Ledger ID
-   * - currency: 貨幣代碼
+   * - currency: 融資代碼
    * - wallet: 錢包類型
    * - mts: 記錄時間
    * - amount: 異動金額
@@ -849,12 +870,13 @@ export class Bitfinex {
    * 取消全部的融資掛單，如果有指定貨幣時，則只取消該貨幣全部的融資掛單。
    * @group v2/auth/funding
    * @param opts - 參數說明
-   * - currency: 貨幣代碼
+   * - currency: 融資代碼
    * @returns
    * - mts: 通知的時間
    * - type: 通知的類型，固定為 `foc_all-req` (funding offer cancel all request)
    * - status: 通知的狀態，這個欄位可能會因時而異，可能的值為 `SUCCESS`、`ERROR`、`FAILURE`…
    * - text: 通知的詳細內容
+   * @see [Cancel All Funding Offers | BitFinex API](https://docs.bitfinex.com/reference/rest-auth-cancel-all-funding-offers)
    */
   async v2AuthWriteFundingOfferCancelAll (opts: zod.InputV2AuthWriteFundingOfferCancelAll = {}): Promise<zod.OutputV2AuthWriteFundingOfferCancelAll> {
     const trace: Record<string, any> = { opts }
@@ -874,14 +896,15 @@ export class Bitfinex {
    * 取得帳戶指定貨幣的融資資訊
    * @group v2/auth/info
    * @param opts - 參數說明
-   * - currency: 貨幣代碼，預設為 `USD`
+   * - currency: 融資代碼，預設為 `USD`
    * @returns
-   * - currency: 貨幣代碼
-   * - symbol: 貨幣代碼
+   * - currency: 融資代碼
+   * - symbol: 融資代碼
    * - yieldLoan: 借貸利率的加權平均
    * - yieldLend: 放貸利率的加權平均
    * - durationLoan: 借貸天數的加權平均
    * - durationLend: 放貸天數的加權平均
+   * @see [Funding Info | BitFinex API](https://docs.bitfinex.com/reference/rest-auth-info-funding)
    */
   async v2AuthReadInfoFunding (opts: zod.InputV2AuthReadInfoFunding = {}): Promise<zod.OutputV2AuthReadInfoFunding> {
     const trace: Record<string, any> = { opts }
@@ -893,6 +916,60 @@ export class Bitfinex {
       return zod.ZodOutputV2AuthReadInfoFunding.parse(trace.resp)
     } catch (err) {
       throw _.update(err, 'data.v2AuthReadInfoFunding', old => old ?? trace)
+    }
+  }
+
+  /**
+   * 取得重要的帳戶資訊
+   * @group v2/auth/info
+   * @returns
+   * - company: 代表此帳戶在何處註冊；在 Bitfinex 註冊的帳戶會顯示 'bitfinex'，在 eosfinex 註冊的帳戶會顯示 'eosfinex'
+   * - compCountries: 根據你的驗證資料（居住地及國籍）所產生的國家代碼陣列
+   * - compCountriesResid: 根據你的驗證資料（居住地）所產生的國家代碼陣列
+   * - competitionEnabled: 代表此帳戶是否啟用 competition
+   * - complAccountType: 合規驗證類型 (`"individual"` 或 `"corporate"`)
+   * - ctxSwitch.allowDisable: 帳戶是否可停用由主帳戶切換至此帳戶的功能
+   * - ctxSwitch.disabled: 是否禁止主帳戶切換到此帳戶
+   * - email: 帳戶的 email
+   * - id: 帳戶 ID
+   * - locale: 帳戶的語系設定
+   * - masterAccount
+   *     - masterAccount.groupId: 帳戶群組 ID
+   *     - masterAccount.groupWithdrawEnabled: 是否啟用群組提領
+   *     - masterAccount.id: 主帳戶的 ID（若此帳戶為子帳戶）
+   *     - masterAccount.inheritVerification: 代表此帳戶是否繼承主帳戶的驗證
+   *     - masterAccount.isGroupMaster: 代表此帳戶是否為群組主帳戶
+   *     - masterAccount.mtsCreate: 主帳戶建立的時間戳
+   * - merchant
+   *     - merchant.enabled: 代表此帳戶是否為商家帳戶
+   *     - merchant.isEnterprise: 代表此帳戶是否為企業商家帳戶
+   * - modes2FA: 已啟用的二階段驗證種類（包含 'u2f', 'otp'）
+   * - mtsAccountCreate: 帳戶建立的時間戳
+   * - pptEnabled: 代表此帳戶是否啟用模擬交易
+   * - securities
+   *     - securities.enabled: 代表此帳戶是否為證券帳戶
+   *     - securities.isElSalvador: 代表此帳戶是否已通過薩爾瓦多證券相關驗證
+   *     - securities.isInvestorAccredited: 代表此帳戶是否已通過合格投資人證券驗證
+   *     - securities.isMaster: 代表此帳戶是否擁有證券子帳戶
+   * - timeLastLogin: 上次登入的時間戳
+   * - timezone: 帳戶的時區設定
+   * - username: 帳戶的使用者名稱
+   * - verification
+   *     - verification.email: 代表此電子郵件是否已驗證
+   *     - verification.level: 帳戶的驗證等級
+   *     - verification.levelSubmitted: 該帳戶已提交的最高驗證申請等級
+   *     - verification.verified: 代表使用者是否為已驗證（KYC）狀態
+   * @see [User Info | BitFinex API](https://docs.bitfinex.com/reference/rest-auth-info-user)
+   */
+  async v2AuthReadInfoUser (): Promise<zod.OutputV2AuthReadInfoUser> {
+    const trace: Record<string, any> = {}
+    try {
+      trace.resp = await this.#apiPostAuth({
+        path: 'v2/auth/r/info/user',
+      })
+      return zod.ZodOutputV2AuthReadInfoUser.parse(trace.resp)
+    } catch (err) {
+      throw _.update(err, 'data.v2AuthReadInfoUser', old => old ?? trace)
     }
   }
 }
