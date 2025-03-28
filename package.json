@@ -7,7 +7,7 @@
   "main": "dist/bitfinex.js",
   "module": "dist/bitfinex.mjs",
   "name": "@taichunmin/bitfinex",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "author": {
     "email": "taichunmin@gmail.com",
     "name": "Chunmin Tai",
@@ -18,7 +18,7 @@
   },
   "devDependencies": {
     "@types/lodash": "^4.17.16",
-    "@types/node": "^22.13.13",
+    "@types/node": "^22.13.14",
     "@typescript-eslint/eslint-plugin": "^7",
     "dayjs": "^1.11.13",
     "dotenv": "^16.4.7",

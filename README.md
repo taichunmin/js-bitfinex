@@ -35,7 +35,7 @@ yarn add @taichunmin/bitfinex
 ## Quickstart
 
 ```js
-import { Bitfinex } from '@taichunmin/bitfinex'
+const { Bitfinex } = require('@taichunmin/bitfinex')
 
 // For public endpoints
 console.log(await Bitfinex.v2PlatformStatus())
