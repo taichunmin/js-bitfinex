@@ -1,5 +1,5 @@
 /** SDK version of `@taichunmin/bitfinex` */
-export const version = process.env.VERSION ?? 'unknown'
+export const version = process?.env?.VERSION ?? 'unknown'
 
 export type {
   JsonArray,
