@@ -126,7 +126,7 @@ export class Bitfinex {
    * ```js
    * const { Bitfinex } = require('@taichunmin/bitfinex')
    *
-   * console.log(await Bitfinex.v2PlatformStatus()) // print: { status: 1 }
+   * console.log(await Bitfinex.v2PlatformStatus()) // Expected output: { status: 1 }
    * ```
    */
   static async v2PlatformStatus (): Promise<ZodV2PlatformStatus.Output> {
@@ -165,7 +165,7 @@ export class Bitfinex {
    * const { Bitfinex } = require('@taichunmin/bitfinex')
    *
    * console.log(await Bitfinex.v2Ticker({ pair: 'BTCUSD' }))
-   * /* print:
+   * /* Expected output:
    * {
    *   symbol: 'tBTCUSD',
    *   bidPrice: 82388,
@@ -215,7 +215,7 @@ export class Bitfinex {
    * const { Bitfinex } = require('@taichunmin/bitfinex')
    *
    * console.log(await Bitfinex.v2Ticker({ currency: 'USD' }))
-   * /* print:
+   * /* Expected output:
    * {
    *   symbol: 'fUSD',
    *   frr: 0.0003347671232876712,
@@ -349,7 +349,7 @@ export class Bitfinex {
    * console.log(await Bitfinex.v2Tickers()) // default: ALL symbols
    * console.log(await Bitfinex.v2Tickers({ symbols: 'fUSD' }))
    * console.log(await Bitfinex.v2Tickers({ symbols: ['tBTCUSD', 'fUSD'] }))
-   * /* print:
+   * /* Expected output:
    * [
    *   {
    *     symbol: 'tBTCUSD',
@@ -425,7 +425,7 @@ export class Bitfinex {
    * console.log(await Bitfinex.v2TickersHist()) // default: ALL symbols
    * console.log(await Bitfinex.v2TickersHist({ symbols: ['tBTCUSD', 'tETHUSD'], limit: 2 }))
    * console.log(await Bitfinex.v2TickersHist({ symbols: 'tBTCUSD', limit: 2 }))
-   * /* print:
+   * /* Expected output:
    * [
    *   {
    *     symbol: 'tBTCUSD',
@@ -479,7 +479,7 @@ export class Bitfinex {
    * const { Bitfinex } = require('@taichunmin/bitfinex')
    *
    * console.log(await Bitfinex.v2TradesHist({ pair: 'BTCUSD', limit: 1 }))
-   * /* print:
+   * /* Expected output:
    * [
    *   {
    *     amount: 0.00014115,
@@ -514,7 +514,7 @@ export class Bitfinex {
    * const { Bitfinex } = require('@taichunmin/bitfinex')
    *
    * console.log(await Bitfinex.v2TradesHist({ currency: 'USD', limit: 1 }))
-   * /* print:
+   * /* Expected output:
    * [
    *   {
    *     amount: -4639.47753284,
@@ -598,7 +598,7 @@ export class Bitfinex {
    * const { Bitfinex } = require('@taichunmin/bitfinex')
    *
    * console.log(await Bitfinex.v2CandlesHist({ pair: 'BTCUSD', timeframe: '1h', limit: 1 }))
-   * /* print:
+   * /* Expected output:
    * [
    *   {
    *     mts: 2025-03-31T08:00:00.000Z,
@@ -638,7 +638,7 @@ export class Bitfinex {
    * const { Bitfinex } = require('@taichunmin/bitfinex')
    *
    * console.log(await Bitfinex.v2CandlesHist({ currency: 'USD', timeframe: '1h', period: 2, limit: 1 }))
-   * /* print:
+   * /* Expected output:
    * [
    *   {
    *     mts: 2025-03-31T08:00:00.000Z,
@@ -680,7 +680,7 @@ export class Bitfinex {
    * const { Bitfinex } = require('@taichunmin/bitfinex')
    *
    * console.log(await Bitfinex.v2CandlesHist({ currency: 'USD', timeframe: '1h', periodStart: 2, periodEnd: 30, aggregation: 30, limit: 1 }))
-   * /* print:
+   * /* Expected output:
    * [
    *   {
    *     mts: 2025-03-31T08:00:00.000Z,
@@ -735,7 +735,7 @@ export class Bitfinex {
    * const { Bitfinex } = require('@taichunmin/bitfinex')
    *
    * console.log(await Bitfinex.v2CandlesLast({ pair: 'BTCUSD', timeframe: '1h' }))
-   * /* print:
+   * /* Expected output:
    * {
    *   mts: 2025-03-31T08:00:00.000Z,
    *   open: 82073,
@@ -772,7 +772,7 @@ export class Bitfinex {
    * const { Bitfinex } = require('@taichunmin/bitfinex')
    *
    * console.log(await Bitfinex.v2CandlesLast({ currency: 'USD', timeframe: '1h', period: 2 }))
-   * /* print:
+   * /* Expected output:
    * {
    *   mts: 2025-03-31T08:00:00.000Z,
    *   open: 0.00025,
@@ -811,7 +811,7 @@ export class Bitfinex {
    * const { Bitfinex } = require('@taichunmin/bitfinex')
    *
    * console.log(await Bitfinex.v2CandlesLast({ currency: 'USD', timeframe: '1h', periodStart: 2, periodEnd: 30, aggregation: 30 }))
-   * /* print:
+   * /* Expected output:
    * {
    *   mts: 2025-03-31T08:00:00.000Z,
    *   open: 0.00025,
@@ -867,7 +867,7 @@ export class Bitfinex {
    * const { Bitfinex } = require('@taichunmin/bitfinex')
    *
    * console.log(await Bitfinex.v2Config('pub:spec:site:maintenance'))
-   * /* print:
+   * /* Expected output:
    * {
    *   id: 'maintenance-march-06-2023',
    *   start: '2023-03-06 09:00:00',
@@ -890,7 +890,7 @@ export class Bitfinex {
    * const { Bitfinex } = require('@taichunmin/bitfinex')
    *
    * console.log(await Bitfinex.v2Config(['pub:spec:site:maintenance', 'pub:list:category:securities']))
-   * /* print:
+   * /* Expected output:
    * {
    *   'pub:spec:site:maintenance': {
    *     id: 'maintenance-march-06-2023',
@@ -950,7 +950,7 @@ export class Bitfinex {
    * const { Bitfinex } = require('@taichunmin/bitfinex')
    *
    * console.log((await Bitfinex.v1SymbolsDetails())[0])
-   * /* print:
+   * /* Expected output:
    * {
    *   expiration: 'NA',
    *   initial_margin: 10,
@@ -999,7 +999,7 @@ export class Bitfinex {
    * const { Bitfinex } = require('@taichunmin/bitfinex')
    *
    * console.log(await Bitfinex.v2FundingStatsHist({ currency: 'USD', limit: 1 }))
-   * /* print:
+   * /* Expected output:
    * [
    *   {
    *     mts: 2025-03-31T08:05:00.000Z,
@@ -1203,10 +1203,29 @@ export class Bitfinex {
    *     console.log(err)
    *   }
    * })()
+   *
+   * /* Expected output:
+   * {
+   *   amount: 1010.5521123,
+   *   amountOrig: 1010.5521123,
+   *   flags: null,
+   *   hidden: false,
+   *   id: 3854301834,
+   *   mtsCreate: '2025-04-03T04:58:08.000Z',
+   *   mtsUpdate: '2025-04-03T04:58:08.000Z',
+   *   notify: false,
+   *   period: 6,
+   *   rate: 0.00039459,
+   *   renew: false,
+   *   status: 'ACTIVE',
+   *   symbol: 'fUSD',
+   *   type: 'LIMIT',
+   *   currency: 'USD'
+   * }
    * *\/
    * ```
    */
-  async v2AuthReadFundingOffers (opts: ZodV2AuthReadFundingOffers.Input): Promise<ZodV2AuthReadFundingOffers.Output> {
+  async v2AuthReadFundingOffers (opts: ZodV2AuthReadFundingOffers.Input = {}): Promise<ZodV2AuthReadFundingOffers.Output> {
     const trace: Record<string, any> = { opts }
     try {
       const opts1 = trace.opts = ZodV2AuthReadFundingOffers.ZodInput.parse(opts)
