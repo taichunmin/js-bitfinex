@@ -7,7 +7,7 @@
   "main": "dist/bitfinex.js",
   "module": "dist/bitfinex.mjs",
   "name": "@taichunmin/bitfinex",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "author": {
     "email": "taichunmin@gmail.com",
     "name": "Chunmin Tai",
@@ -47,9 +47,9 @@
         "import": "./dist/index.d.mts",
         "require": "./dist/index.d.ts"
       },
-      "script": "./dist/index.global.js",
       "import": "./dist/index.mjs",
-      "require": "./dist/index.js"
+      "require": "./dist/index.js",
+      "script": "./dist/index.global.js"
     }
   },
   "keywords": [
