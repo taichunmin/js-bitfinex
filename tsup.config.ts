@@ -1,6 +1,6 @@
 import { defineConfig } from 'tsup'
 import { nodeModulesPolyfillPlugin } from 'esbuild-plugins-node-modules-polyfill'
-import pkg from './package.json' assert { type: 'json' }
+import pkg from './package.json' with { type: 'json' }
 
 export default defineConfig((options) => ({
   clean: true,

@@ -7,7 +7,7 @@
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "name": "@taichunmin/bitfinex",
-  "version": "0.0.11",
+  "version": "0.0.12",
   "author": {
     "email": "taichunmin@gmail.com",
     "name": "Chunmin Tai",
@@ -17,28 +17,29 @@
     "url": "https://github.com/taichunmin/js-bitfinex/issues"
   },
   "devDependencies": {
-    "@types/lodash": "^4.17.16",
-    "@types/node": "^22.14.0",
+    "@tsconfig/node-lts": "^22.0.1",
+    "@types/lodash": "^4.17.17",
+    "@types/node": "^22.15.29",
     "@typescript-eslint/eslint-plugin": "^7",
     "dayjs": "^1.11.13",
-    "dotenv": "^16.4.7",
+    "dotenv": "^16.5.0",
     "esbuild-plugins-node-modules-polyfill": "^1.7.0",
     "eslint": "^8",
     "eslint-config-love": "^43",
     "eslint-plugin-import": "^2.31.0",
-    "eslint-plugin-n": "^17.17.0",
+    "eslint-plugin-n": "^17.19.0",
     "eslint-plugin-promise": "^7.2.1",
     "eslint-plugin-tsdoc": "^0.4.0",
     "jest": "^29.7.0",
-    "ts-jest": "^29.3.1",
-    "tsup": "^8.4.0",
-    "tsx": "^4.19.3",
-    "type-fest": "^4.39.0",
-    "typedoc": "^0.28.1",
+    "ts-jest": "^29.3.4",
+    "tsup": "^8.5.0",
+    "tsx": "^4.19.4",
+    "type-fest": "^4.41.0",
+    "typedoc": "^0.28.5",
     "typedoc-plugin-ga": "^1.0.5",
-    "typedoc-plugin-mdn-links": "^5.0.1",
-    "typescript": "^5.8.2",
-    "typescript-eslint": "^8.29.0"
+    "typedoc-plugin-mdn-links": "^5.0.2",
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.33.1"
   },
   "exports": {
     "./package.json": "./package.json",
@@ -47,9 +48,9 @@
         "import": "./dist/index.d.mts",
         "require": "./dist/index.d.ts"
       },
+      "script": "./dist/index.global.js",
       "import": "./dist/index.mjs",
-      "require": "./dist/index.js",
-      "script": "./dist/index.global.js"
+      "require": "./dist/index.js"
     }
   },
   "keywords": [
@@ -60,9 +61,9 @@
     "url": "git+https://github.com/taichunmin/js-bitfinex.git"
   },
   "dependencies": {
-    "axios": "^1.8.4",
+    "axios": "^1.9.0",
     "lodash": "^4.17.21",
-    "zod": "^3.24.2"
+    "zod": "^3.25.51"
   },
   "scripts": {
     "build": "yarn build:js && yarn build:docs && yarn build:sitemap",
