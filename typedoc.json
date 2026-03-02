@@ -6,7 +6,7 @@
   "gaID": "G-KB8ZL6LPH5",
   "includeVersion": true,
   "out": "dist",
-  "plugin": ["typedoc-plugin-mdn-links", "typedoc-plugin-ga"],
+  "plugin": ["typedoc-plugin-mdn-links", "typedoc-plugin-ga", "typedoc-plugin-zod"],
   "navigationLinks": {
     "Bitfinex API": "https://docs.bitfinex.com/reference",
     "GitHub": "https://github.com/taichunmin/js-bitfinex",

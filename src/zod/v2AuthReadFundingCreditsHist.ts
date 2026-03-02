@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import { z } from 'zod'
-import { ZodJsonValue, transformMts } from './index'
+import { transformMts } from './index'
 
 export const ZodInput = z.object({
   currency: z.string().trim().regex(/^[\w:]+$/).toUpperCase().optional(),
@@ -12,7 +12,7 @@ export type Input = z.input<typeof ZodInput>
 
 const ZodOutputCredit = z.object({
   amount: z.number(), // AMOUNT: Amount of funds provided
-  flags: ZodJsonValue, // FLAGS: Future params object (stay tuned)
+  flags: z.json(), // FLAGS: Future params object (stay tuned)
   hidden: z.coerce.boolean(), // HIDDEN: 0 if false, 1 if true
   id: z.number().int(), // Loan ID
   mtsCreate: z.coerce.date(), // MTS_CREATE: Millisecond Time Stamp when the loan was created

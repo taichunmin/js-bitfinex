@@ -7,7 +7,7 @@
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "name": "@taichunmin/bitfinex",
-  "version": "0.0.12",
+  "version": "0.0.13",
   "author": {
     "email": "taichunmin@gmail.com",
     "name": "Chunmin Tai",
@@ -17,29 +17,30 @@
     "url": "https://github.com/taichunmin/js-bitfinex/issues"
   },
   "devDependencies": {
-    "@tsconfig/node-lts": "^22.0.1",
-    "@types/lodash": "^4.17.17",
-    "@types/node": "^22.15.29",
+    "@tsconfig/node-lts": "^24.0.0",
+    "@types/lodash": "^4.17.24",
+    "@types/node": "^25.3.3",
     "@typescript-eslint/eslint-plugin": "^7",
-    "dayjs": "^1.11.13",
-    "dotenv": "^16.5.0",
-    "esbuild-plugins-node-modules-polyfill": "^1.7.0",
+    "dayjs": "^1.11.19",
+    "dotenv": "^17.3.1",
+    "esbuild-plugins-node-modules-polyfill": "^1.8.1",
     "eslint": "^8",
     "eslint-config-love": "^43",
-    "eslint-plugin-import": "^2.31.0",
-    "eslint-plugin-n": "^17.19.0",
+    "eslint-plugin-import": "^2.32.0",
+    "eslint-plugin-n": "^17.24.0",
     "eslint-plugin-promise": "^7.2.1",
-    "eslint-plugin-tsdoc": "^0.4.0",
-    "jest": "^29.7.0",
-    "ts-jest": "^29.3.4",
-    "tsup": "^8.5.0",
-    "tsx": "^4.19.4",
-    "type-fest": "^4.41.0",
-    "typedoc": "^0.28.5",
-    "typedoc-plugin-ga": "^1.0.5",
-    "typedoc-plugin-mdn-links": "^5.0.2",
-    "typescript": "^5.8.3",
-    "typescript-eslint": "^8.33.1"
+    "eslint-plugin-tsdoc": "^0.5.2",
+    "jest": "^30.2.0",
+    "ts-jest": "^29.4.6",
+    "tsup": "^8.5.1",
+    "tsx": "^4.21.0",
+    "type-fest": "^5.4.4",
+    "typedoc": "^0.28.17",
+    "typedoc-plugin-ga": "^1.1.1",
+    "typedoc-plugin-mdn-links": "^5.1.1",
+    "typedoc-plugin-zod": "^1.4.3",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.56.1"
   },
   "exports": {
     "./package.json": "./package.json",
@@ -51,6 +52,15 @@
       "script": "./dist/index.global.js",
       "import": "./dist/index.mjs",
       "require": "./dist/index.js"
+    },
+    "./*": {
+      "types": {
+        "import": "./dist/*.d.mts",
+        "require": "./dist/*.d.ts"
+      },
+      "script": "./dist/*.global.js",
+      "import": "./dist/*.mjs",
+      "require": "./dist/*.js"
     }
   },
   "keywords": [
@@ -61,9 +71,9 @@
     "url": "git+https://github.com/taichunmin/js-bitfinex.git"
   },
   "dependencies": {
-    "axios": "^1.9.0",
-    "lodash": "^4.17.21",
-    "zod": "^3.25.51"
+    "axios": "^1.13.6",
+    "lodash": "^4.17.23",
+    "zod": "^4.3.6"
   },
   "scripts": {
     "build": "yarn build:js && yarn build:docs && yarn build:sitemap",
@@ -73,7 +83,7 @@
     "dev:docs": "nodemon --watch lib --ext ts --exec \"yarn build:docs\"",
     "lint": "yarn lint:ci --fix",
     "lint:ci": "eslint --ext ts --fix ./src",
-    "publish:test": "npm publish --access public --dry-run",
+    "publish:test": "npm pack --dry-run",
     "test": "jest --roots ./src --",
     "test:ci": "jest --roots ./src --ci --coverage"
   }

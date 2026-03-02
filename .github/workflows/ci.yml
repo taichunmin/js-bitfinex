@@ -9,8 +9,8 @@ on:
 
 permissions:
   contents: read
-  pages: write
   id-token: write
+  pages: write
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -20,21 +20,26 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - name: Print all context
-        run: |
-          echo 'env=${{ toJSON(env) }}'
-          echo 'github=${{ toJSON(github) }}'
-          echo 'inputs=${{ toJSON(inputs) }}'
-          echo 'job=${{ toJSON(job) }}'
-          echo 'runner=${{ toJSON(runner) }}'
-          echo 'secrets=${{ toJSON(secrets) }}'
-          echo 'steps=${{ toJSON(steps) }}'
-          echo 'vars=${{ toJSON(vars) }}'
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Dump GitHub context
+        env:
+          ACTION_CONTEXT: |
+            {
+              "env": ${{ toJSON(env) }},
+              "github": ${{ toJSON(github) }},
+              "inputs": ${{ toJSON(inputs) }},
+              "job": ${{ toJSON(job) }},
+              "runner": ${{ toJSON(runner) }},
+              "secrets": ${{ toJSON(secrets) }},
+              "steps": ${{ toJSON(steps) }},
+              "vars": ${{ toJSON(vars) }}
+            }
+        run: echo "$ACTION_CONTEXT" | jq .
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
-          node-version: 20
           cache: 'yarn'
+          node-version: lts/*
+          registry-url: 'https://registry.npmjs.org'
       - name: install, lint, test, build
         run: |
           set -ex
@@ -51,11 +56,26 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Dump GitHub context
+        env:
+          ACTION_CONTEXT: |
+            {
+              "env": ${{ toJSON(env) }},
+              "github": ${{ toJSON(github) }},
+              "inputs": ${{ toJSON(inputs) }},
+              "job": ${{ toJSON(job) }},
+              "runner": ${{ toJSON(runner) }},
+              "secrets": ${{ toJSON(secrets) }},
+              "steps": ${{ toJSON(steps) }},
+              "vars": ${{ toJSON(vars) }}
+            }
+        run: echo "$ACTION_CONTEXT" | jq .
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
-          node-version: 20
           cache: 'yarn'
+          node-version: lts/*
+          registry-url: 'https://registry.npmjs.org'
       - name: install and build
         run: |
           set -ex
@@ -75,22 +95,25 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@v4
       - name: 發布至 npm
-        uses: JS-DevTools/npm-publish@v3
+        uses: JS-DevTools/npm-publish@v4
         id: npm-publish
         with:
           access: public
-          token: ${{ secrets.NPM_TOKEN }}
       - name: jsDelivr Purge
         if: ${{ steps.npm-publish.outputs.type }}
         uses: egad13/purge-jsdelivr-cache@v1
         with:
           url: |
-            https://cdn.jsdelivr.net/npm/@taichunmin/bitfinex@0
-            https://cdn.jsdelivr.net/npm/@taichunmin/bitfinex@0/+esm
             https://cdn.jsdelivr.net/npm/@taichunmin/bitfinex
-            https://cdn.jsdelivr.net/npm/@taichunmin/bitfinex/+esm
-
-            https://cdn.jsdelivr.net/npm/@taichunmin/bitfinex@0/dist/index.global.js
-            https://cdn.jsdelivr.net/npm/@taichunmin/bitfinex@0/dist/index.mjs/+esm
             https://cdn.jsdelivr.net/npm/@taichunmin/bitfinex/dist/index.global.js
+            
+            https://cdn.jsdelivr.net/npm/@taichunmin/bitfinex@0
+            https://cdn.jsdelivr.net/npm/@taichunmin/bitfinex@0/dist/index.global.js
+
+            https://cdn.jsdelivr.net/npm/@taichunmin/bitfinex/+esm
             https://cdn.jsdelivr.net/npm/@taichunmin/bitfinex/dist/index.mjs/+esm
+            https://cdn.jsdelivr.net/npm/@taichunmin/bitfinex/index/+esm
+
+            https://cdn.jsdelivr.net/npm/@taichunmin/bitfinex@0/+esm
+            https://cdn.jsdelivr.net/npm/@taichunmin/bitfinex@0/dist/index.mjs/+esm
+            https://cdn.jsdelivr.net/npm/@taichunmin/bitfinex@0/index/+esm

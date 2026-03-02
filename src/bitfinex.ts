@@ -3,6 +3,8 @@ import { createHmac } from 'crypto'
 import _ from 'lodash'
 import * as enums from './enums'
 import type * as zod from './zod'
+import type * as ZodApiGetPub from './zod/apiGetPub'
+import type * as ZodApiPostAuth from './zod/apiPostAuth'
 import * as ZodV1SymbolsDetails from './zod/v1SymbolsDetails'
 import * as ZodV2AuthReadFundingAutoStatus from './zod/v2AuthReadFundingAutoStatus'
 import * as ZodV2AuthReadFundingCredits from './zod/v2AuthReadFundingCredits'
@@ -13,9 +15,12 @@ import * as ZodV2AuthReadInfoFunding from './zod/v2AuthReadInfoFunding'
 import * as ZodV2AuthReadInfoUser from './zod/v2AuthReadInfoUser'
 import * as ZodV2AuthReadLedgersHist from './zod/v2AuthReadLedgersHist'
 import * as ZodV2AuthReadPermissions from './zod/v2AuthReadPermissions'
+import * as ZodV2AuthReadSettings from './zod/v2AuthReadSettings'
 import * as ZodV2AuthReadWallets from './zod/v2AuthReadWallets'
 import * as ZodV2AuthWriteFundingAuto from './zod/v2AuthWriteFundingAuto'
 import * as ZodV2AuthWriteFundingOfferCancelAll from './zod/v2AuthWriteFundingOfferCancelAll'
+import * as ZodV2AuthWriteSettingsDel from './zod/v2AuthWriteSettingsDel'
+import * as ZodV2AuthWriteSettingsSet from './zod/v2AuthWriteSettingsSet'
 import * as ZodV2CandlesHist from './zod/v2CandlesHist'
 import * as ZodV2CandlesLast from './zod/v2CandlesLast'
 import * as ZodV2Config from './zod/v2Config'
@@ -55,12 +60,8 @@ export class Bitfinex {
     return `${Date.now()}000`
   }
 
-  static async #apiGetPub <TRes extends zod.JsonValue = zod.JsonValue, TBody extends zod.JsonObject = zod.JsonObject> (opts: {
-    query?: TBody
-    headers?: Record<string, string>
-    path: string
-  }): Promise<TRes> {
-    const trace: Record<string, any> = {}
+  static async #apiGetPub <TRes extends ZodApiGetPub.Output = ZodApiGetPub.Output> (opts: ZodApiGetPub.Input): Promise<TRes> {
+    const trace: Record<string, any> = { opts }
     try {
       trace.url = new URL(opts.path, 'https://api-pub.bitfinex.com/').href
       const res = await axios.get<TRes, AxiosResponse<TRes>>(trace.url, {
@@ -69,7 +70,8 @@ export class Bitfinex {
       })
       return res.data
     } catch (err) {
-      throw _.update(err, 'data.apiGetPub', orig => orig ?? { ...trace, opts })
+      trace.errData = err?.response?.data ?? []
+      throw _.update(err, 'data.apiGetPub', orig => orig ?? trace)
     }
   }
 
@@ -78,12 +80,8 @@ export class Bitfinex {
     return createHmac('sha384', this.#apiSecret ?? '').update(data).digest('hex')
   }
 
-  async #apiPostAuth <TRes extends zod.JsonValue = zod.JsonValue, TBody extends zod.JsonObject = zod.JsonObject> (opts: {
-    body?: TBody
-    headers?: Record<string, string>
-    path: string
-  }): Promise<TRes> {
-    const trace: Record<string, any> = {}
+  async #apiPostAuth <TRes extends ZodApiPostAuth.Output = ZodApiPostAuth.Output> (opts: ZodApiPostAuth.Input): Promise<TRes> {
+    const trace: Record<string, any> = { opts }
     try {
       trace.url = new URL(opts.path, 'https://api.bitfinex.com/').href
       const bodyJson = trace.bodyJson = JSON.stringify(_.omitBy(opts.body, _.isNil) ?? {})
@@ -105,12 +103,12 @@ export class Bitfinex {
       const res = await axios.post<TRes, AxiosResponse<TRes>>(trace.url, bodyJson, { headers: trace.headers })
       return res.data
     } catch (err) {
-      const errData = err?.response?.data ?? []
+      const errData = trace.errData = err?.response?.data ?? []
       if (errData[0] === 'error') {
         const [, code, message] = errData
-        err = _.set(new Error(`(${code}) ${message}`), 'originalError', err)
+        err = _.set(new Error(`(${code}) ${message}`), 'cause', err)
       }
-      throw _.update(err, 'data.apiPostAuth', orig => orig ?? { ...trace, opts })
+      throw _.update(err, 'data.apiPostAuth', orig => orig ?? trace)
     }
   }
 
@@ -843,7 +841,7 @@ export class Bitfinex {
   }
 
   /**
-   * 取得所有的 Bifinex 設定檔。
+   * 取得所有的 Bifinex 設定檔 (此設定檔與使用者無關)。
    * @group v2
    * @returns Bifinex 所有設定檔的內容。
    * @see [Configs | BitFinex API](https://docs.bitfinex.com/reference/rest-public-conf)
@@ -854,10 +852,10 @@ export class Bitfinex {
    * console.log(await Bitfinex.v2Config())
    * ```
    */
-  static async v2Config (): Promise<Record<enums.V2ConfigRequest, zod.JsonValue>>
+  static async v2Config (): Promise<Record<enums.V2ConfigRequest, zod.ZodJSONSchema>>
 
   /**
-   * 取得指定的 Bifinex 設定檔。
+   * 取得指定的 Bifinex 設定檔 (此設定檔與使用者無關)。
    * @group v2
    * @param req - 設定檔的名稱。
    * @returns Bifinex 設定檔的內容。
@@ -877,7 +875,7 @@ export class Bitfinex {
    * *\/
    * ```
    */
-  static async v2Config (req: enums.V2ConfigRequest): Promise<zod.JsonValue>
+  static async v2Config (req: enums.V2ConfigRequest): Promise<zod.ZodJSONSchema>
 
   /**
    * 取得指定的 Bifinex 設定檔。
@@ -918,7 +916,7 @@ export class Bitfinex {
    * *\/
    * ```
    */
-  static async v2Config <TReq extends enums.V2ConfigRequest> (reqs: TReq[]): Promise<Record<TReq, zod.JsonValue>>
+  static async v2Config <TReq extends enums.V2ConfigRequest> (reqs: TReq[]): Promise<Record<TReq, zod.ZodJSONSchema>>
 
   static async v2Config (opts?: ZodV2Config.Input): Promise<any> {
     const trace: Record<string, any> = { opts }
@@ -1841,6 +1839,215 @@ export class Bitfinex {
       return ZodV2AuthReadInfoUser.parseOutput(trace.resp)
     } catch (err) {
       throw _.update(err, 'data.v2AuthReadInfoUser', old => old ?? trace)
+    }
+  }
+
+  /**
+   * 取得指定的使用者設定值。
+   * @remarks
+   * - 可能需要有 `{ setting: { read: true } }` 權限才能讀取使用者設定。
+   * @group v2/auth
+   * @see [User Settings Read | BitFinex API](https://docs.bitfinex.com/reference/rest-auth-settings)
+   * @example
+   * 取得指定的使用者設定。
+   * ```js
+   * apiKey = 'apiKey'
+   * apiSecret = 'apiSecret'
+   *
+   * await (async () => {
+   *   try {
+   *     const { Bitfinex } = require('@taichunmin/bitfinex')
+   *     const bitfinex = new Bitfinex({ apiKey, apiSecret })
+   *     console.log(await bitfinex.v2AuthReadSettings(['api:taichunmin_test']))
+   *     /* Expected output:
+   *     { taichunmin_test: 'test' }
+   *     *\/
+   *   } catch (err) {
+   *     console.log(err)
+   *   }
+   * })()
+   * ```
+   * @example
+   * 取得 Bitfinex 的所有使用者設定。
+   * ```js
+   * apiKey = 'apiKey'
+   * apiSecret = 'apiSecret'
+   *
+   * await (async () => {
+   *   try {
+   *     const { Bitfinex } = require('@taichunmin/bitfinex')
+   *     const bitfinex = new Bitfinex({ apiKey, apiSecret })
+   *     console.log(await bitfinex.v2AuthReadSettings(['api:bitfinex_*']))
+   *     /* Expected output:
+   *     {
+   *       bitfinex_wallets_hide_small_balances: true,
+   *       // ...
+   *     }
+   *     *\/
+   *   } catch (err) {
+   *     console.log(err)
+   *   }
+   * })()
+   * ```
+   * @example
+   * 取得所有的使用者設定。
+   * ```js
+   * apiKey = 'apiKey'
+   * apiSecret = 'apiSecret'
+   *
+   * await (async () => {
+   *   try {
+   *     const { Bitfinex } = require('@taichunmin/bitfinex')
+   *     const bitfinex = new Bitfinex({ apiKey, apiSecret })
+   *     console.log(await bitfinex.v2AuthReadSettings(['api:*']))
+   *     /* Expected output:
+   *     {
+   *       bitfinex_wallets_hide_small_balances: true,
+   *       // ...
+   *     }
+   *     *\/
+   *   } catch (err) {
+   *     console.log(err)
+   *   }
+   * })()
+   * ```
+   */
+  async v2AuthReadSettings (opts: ZodV2AuthReadSettings.Input): Promise<ZodV2AuthReadSettings.Output> {
+    const trace: Record<string, any> = { opts }
+    try {
+      const opts1 = trace.opts = ZodV2AuthReadSettings.ZodInput.parse(opts)
+      trace.resp = await this.#apiPostAuth({
+        path: 'v2/auth/r/settings',
+        body: { keys: opts1 },
+      })
+      return ZodV2AuthReadSettings.parseOutput(trace.resp)
+    } catch (err) {
+      throw _.update(err, 'data.v2AuthReadSettings', old => old ?? trace)
+    }
+  }
+
+  /**
+   * 取得指定的使用者設定值。
+   * @returns
+   * - mts: 通知的時間
+   * - type: 通知的類型，固定為 `acc_ss` (account settings set)
+   * - status: 通知的狀態，這個欄位可能會因時而異，可能的值為 `SUCCESS`、`ERROR`、`FAILURE`…
+   * - affectedSettings: 被新增或修改的使用者設定數量
+   * @remarks
+   * - 可能需要有 `{ setting: { write: true } }` 權限才能讀取使用者設定。
+   * @group v2/auth
+   * @inlineType ZodV2AuthWriteSettingsSet.Input
+   * @see [User Settings Write | BitFinex API](https://docs.bitfinex.com/reference/rest-auth-settings-set)
+   * @example
+   * 取得指定的使用者設定。
+   * ```js
+   * apiKey = 'apiKey'
+   * apiSecret = 'apiSecret'
+   *
+   * await (async () => {
+   *   try {
+   *     const { Bitfinex } = require('@taichunmin/bitfinex')
+   *     const bitfinex = new Bitfinex({ apiKey, apiSecret })
+   *     console.log(await bitfinex.v2AuthWriteSettingsSet({
+   *       'api:taichunmin_test': 'test',
+   *       'api:taichunmin_foo': { bar: 2 },
+   *     }))
+   *     /* Expected output:
+   *     {
+   *       mts: 2026-03-02T21:18:31.854Z,
+   *       type: 'acc_ss',
+   *       affectedSettings: 2,
+   *       status: 'SUCCESS'
+   *     }
+   *     *\/
+   *   } catch (err) {
+   *     console.log(err)
+   *   }
+   * })()
+   * ```
+   */
+  async v2AuthWriteSettingsSet (opts: ZodV2AuthWriteSettingsSet.Input): Promise<ZodV2AuthWriteSettingsSet.Output> {
+    const trace: Record<string, any> = { opts }
+    try {
+      const opts1 = trace.opts = ZodV2AuthWriteSettingsSet.ZodInput.parse(opts)
+      trace.resp = await this.#apiPostAuth({
+        path: 'v2/auth/w/settings/set',
+        body: { settings: opts1 },
+      })
+      return ZodV2AuthWriteSettingsSet.parseOutput(trace.resp)
+    } catch (err) {
+      throw _.update(err, 'data.v2AuthWriteSettingsSet', old => old ?? trace)
+    }
+  }
+
+  /**
+   * 刪除指定的使用者設定值。
+   * @returns
+   * - mts: 通知的時間
+   * - type: 通知的類型，固定為 `acc_sd` (account settings del)
+   * - status: 通知的狀態，這個欄位可能會因時而異，可能的值為 `SUCCESS`、`ERROR`、`FAILURE`…
+   * @remarks
+   * - 可能需要有 `{ setting: { write: true } }` 權限才能讀取使用者設定。
+   * @group v2/auth
+   * @see [User Settings Delete | BitFinex API](https://docs.bitfinex.com/reference/rest-auth-settings-del)
+   * @example
+   * 刪除指定的使用者設定值。
+   * ```js
+   * apiKey = 'apiKey'
+   * apiSecret = 'apiSecret'
+   *
+   * await (async () => {
+   *   try {
+   *     const { Bitfinex } = require('@taichunmin/bitfinex')
+   *     const bitfinex = new Bitfinex({ apiKey, apiSecret })
+   *     console.log(await bitfinex.v2AuthWriteSettingsDel(['api:taichunmin_test']))
+   *     /* Expected output:
+   *     {
+   *       mts: 2026-03-02T21:18:31.854Z,
+   *       type: 'acc_sd',
+   *       status: 'SUCCESS'
+   *     }
+   *     *\/
+   *   } catch (err) {
+   *     console.log(err)
+   *   }
+   * })()
+   * ```
+   * @example
+   * 刪除所有符合萬用字元的使用者設定值。
+   * ```js
+   * apiKey = 'apiKey'
+   * apiSecret = 'apiSecret'
+   *
+   * await (async () => {
+   *   try {
+   *     const { Bitfinex } = require('@taichunmin/bitfinex')
+   *     const bitfinex = new Bitfinex({ apiKey, apiSecret })
+   *     console.log(await bitfinex.v2AuthWriteSettingsDel(['api:taichunmin_*']))
+   *     /* Expected output:
+   *     {
+   *       mts: 2026-03-02T21:18:31.854Z,
+   *       type: 'acc_sd',
+   *       status: 'SUCCESS'
+   *     }
+   *     *\/
+   *   } catch (err) {
+   *     console.log(err)
+   *   }
+   * })()
+   * ```
+   */
+  async v2AuthWriteSettingsDel (opts: ZodV2AuthWriteSettingsDel.Input): Promise<ZodV2AuthWriteSettingsDel.Output> {
+    const trace: Record<string, any> = { opts }
+    try {
+      const opts1 = trace.opts = ZodV2AuthWriteSettingsDel.ZodInput.parse(opts)
+      trace.resp = await this.#apiPostAuth({
+        path: 'v2/auth/w/settings/del',
+        body: { keys: opts1 },
+      })
+      return ZodV2AuthWriteSettingsDel.parseOutput(trace.resp)
+    } catch (err) {
+      throw _.update(err, 'data.v2AuthWriteSettingsDel', old => old ?? trace)
     }
   }
 }

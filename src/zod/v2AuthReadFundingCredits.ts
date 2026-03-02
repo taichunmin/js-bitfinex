@@ -1,6 +1,5 @@
 import _ from 'lodash'
 import { z } from 'zod'
-import { ZodJsonValue } from './index'
 
 export const ZodInput = z.object({
   currency: z.string().trim().regex(/^[\w:]+$/).toUpperCase().optional(),
@@ -9,7 +8,7 @@ export type Input = z.input<typeof ZodInput>
 
 const ZodOutputCredit = z.object({
   amount: z.number(),
-  flags: ZodJsonValue,
+  flags: z.json(),
   hidden: z.coerce.boolean(),
   id: z.number().int(),
   mtsCreate: z.coerce.date(),

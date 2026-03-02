@@ -1,12 +1,11 @@
 import _ from 'lodash'
 import { z } from 'zod'
-import { ZodJsonObject } from './index'
 
 const ZodOutputWallet = z.object({
   availableBalance: z.number(), // Wallet balance available for orders/withdrawal/transfer
   balance: z.number(), // Balance
   currency: z.string(), // Currency (e.g. USD, BTC, ETH, ...)
-  lastChange: ZodJsonObject,
+  lastChange: z.json(),
   type: z.string(), // Wallet name (exchange, margin, funding)
   unsettledInterest: z.number(), // Unsettled interest
 })
