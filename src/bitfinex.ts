@@ -852,7 +852,7 @@ export class Bitfinex {
    * console.log(await Bitfinex.v2Config())
    * ```
    */
-  static async v2Config (): Promise<Record<enums.V2ConfigRequest, zod.ZodJSONSchema>>
+  static async v2Config (): Promise<Record<enums.V2ConfigRequest, zod.JsonValue>>
 
   /**
    * 取得指定的 Bifinex 設定檔 (此設定檔與使用者無關)。
@@ -875,7 +875,7 @@ export class Bitfinex {
    * *\/
    * ```
    */
-  static async v2Config (req: enums.V2ConfigRequest): Promise<zod.ZodJSONSchema>
+  static async v2Config (req: enums.V2ConfigRequest): Promise<zod.JsonValue>
 
   /**
    * 取得指定的 Bifinex 設定檔。
@@ -916,7 +916,7 @@ export class Bitfinex {
    * *\/
    * ```
    */
-  static async v2Config <TReq extends enums.V2ConfigRequest> (reqs: TReq[]): Promise<Record<TReq, zod.ZodJSONSchema>>
+  static async v2Config <TReq extends enums.V2ConfigRequest> (reqs: TReq[]): Promise<Record<TReq, zod.JsonValue>>
 
   static async v2Config (opts?: ZodV2Config.Input): Promise<any> {
     const trace: Record<string, any> = { opts }

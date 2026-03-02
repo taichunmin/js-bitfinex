@@ -3,7 +3,7 @@ import * as enums from '../enums'
 
 export * from 'zod'
 
-export type JsonObject = { [key: string]: z.ZodJSONSchema }
+export type JsonValue = z.output<z.ZodJSONSchema>
 
 export const ZodAnyToUndefined = z.any().transform(() => undefined)
 
