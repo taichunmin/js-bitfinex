@@ -39,6 +39,7 @@ export class Bitfinex {
   readonly #apiKey?: string
   readonly #apiSecret?: string
   readonly #authToken?: string
+  #lastNonce: bigint = 0n
 
   constructor (opts: {
     affCode?: string
@@ -56,8 +57,10 @@ export class Bitfinex {
     } else throw new Error('missing api key, api secret or auth token')
   }
 
-  static #createNonce (): string {
-    return `${Date.now()}000`
+  #createNonce (): string {
+    const nonce = BigInt(`${Date.now()}000`)
+    this.#lastNonce = nonce > this.#lastNonce ? nonce : this.#lastNonce + 1n
+    return this.#lastNonce.toString()
   }
 
   static async #apiGetPub <TRes extends ZodApiGetPub.Output = ZodApiGetPub.Output> (opts: ZodApiGetPub.Input): Promise<TRes> {
@@ -85,7 +88,7 @@ export class Bitfinex {
     try {
       trace.url = new URL(opts.path, 'https://api.bitfinex.com/').href
       const bodyJson = trace.bodyJson = JSON.stringify(_.omitBy(opts.body, _.isNil) ?? {})
-      const nonce = Bitfinex.#createNonce()
+      const nonce = this.#createNonce()
       trace.headers = {
         ...(opts.headers ?? {}),
         'Content-Type': 'application/json',

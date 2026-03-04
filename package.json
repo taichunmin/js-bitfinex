@@ -7,7 +7,7 @@
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "name": "@taichunmin/bitfinex",
-  "version": "0.0.14",
+  "version": "0.0.15",
   "author": {
     "email": "taichunmin@gmail.com",
     "name": "Chunmin Tai",
